@@ -1,0 +1,49 @@
+---
+interface Impact {
+  before: string;
+  after: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  impacts?: Impact[];
+}
+
+const { title, impacts } = Astro.props;
+---
+<div class="mb-8">
+  <h3>{title}</h3>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="border border-red-200 bg-red-50/50 rounded-lg p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">BEFORE</span>
+      </div>
+      <div class="text-sm text-visdom-gray-600 [&>p]:!mb-2 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:space-y-1 [&>ol]:text-sm [&>ol]:text-visdom-gray-600 [&_strong]:text-visdom-gray-800">
+        <slot name="before" />
+      </div>
+    </div>
+    <div class="border border-emerald-200 bg-emerald-50/50 rounded-lg p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">AFTER</span>
+      </div>
+      <div class="text-sm text-visdom-gray-600 [&>p]:!mb-2 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:space-y-1 [&>ol]:text-sm [&>ol]:text-visdom-gray-600 [&_strong]:text-visdom-gray-800">
+        <slot name="after" />
+      </div>
+    </div>
+  </div>
+  {impacts && impacts.length > 0 && (
+    <div class="flex flex-wrap gap-6 mt-4 pt-4 border-t border-visdom-gray-200">
+      {impacts.map((impact) => (
+        <div class="text-center">
+          <div class="flex items-center gap-2 justify-center">
+            <span class="text-base line-through text-red-400">{impact.before}</span>
+            <span class="text-visdom-gray-400">&rarr;</span>
+            <span class="text-xl font-bold text-emerald-600">{impact.after}</span>
+          </div>
+          <span class="text-xs text-visdom-gray-500">{impact.label}</span>
+        </div>
+      ))}
+    </div>
+  )}
+</div>

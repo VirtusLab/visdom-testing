@@ -1,0 +1,15 @@
+---
+import { ResourceCard as ResourceCardReact } from '@virtuslab/visdom-ui';
+
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  tag?: string;
+  tagColor?: 'green' | 'blue' | 'amber' | 'red' | 'purple';
+  source?: string;
+}
+
+const props = Astro.props;
+---
+<ResourceCardReact {...props} />

@@ -1,0 +1,284 @@
+---
+import DocLayout from '../../../layouts/DocLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import LayerBadge from '../../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Layer 2: Mutation-Guided Quality"
+  subtitle="PIT + AI augmentation. Measures real test effectiveness, not just line coverage."
+  section="Reference"
+  tags={[
+    { label: "Layer 2", variant: "green" },
+    { label: "AI-Augmented", variant: "outline" }
+  ]}
+  prev={{ label: "Layer 1: Property-Based Testing", href: `${base}reference/layers/property-based-testing/` }}
+  next={{ label: "Layer 3: Contract & Integration Testing", href: `${base}reference/layers/contract-testing/` }}
+>
+
+<h2>Why mutation testing?</h2>
+
+<p>
+  Code coverage measures what <em>runs</em>, not what's <em>tested</em>. A test suite can achieve 100%
+  line coverage without asserting anything meaningful — every line executes, but no assertion would fail
+  if the logic was wrong.
+</p>
+
+<p>
+  Mutation testing answers a harder question: <strong>would your tests fail if the code was wrong?</strong>
+</p>
+
+<p>
+  The process is simple: insert small, deliberate changes into your production code (mutants), run the
+  test suite against each mutant, and count how many mutants the tests detect (kill). If a mutant
+  survives — meaning the tests still pass with incorrect code — you have a gap in test effectiveness.
+</p>
+
+<h2>How it works</h2>
+
+<p>
+  A mutation testing tool creates <strong>mutants</strong> by applying small syntactic transformations
+  to the production code:
+</p>
+
+<ul>
+  <li><strong>Conditionals</strong>: <code>&gt;</code> becomes <code>&gt;=</code>, <code>==</code> becomes <code>!=</code></li>
+  <li><strong>Operators</strong>: <code>+</code> becomes <code>-</code>, <code>*</code> becomes <code>/</code></li>
+  <li><strong>Return values</strong>: return <code>true</code> becomes return <code>false</code>, return <code>0</code> becomes return <code>1</code></li>
+  <li><strong>Void calls</strong>: method call removed entirely</li>
+  <li><strong>Negation</strong>: <code>if (condition)</code> becomes <code>if (!condition)</code></li>
+</ul>
+
+<p>
+  Each mutant is a tiny fault injected into one location. The tool runs the full test suite against each
+  mutant independently. Three outcomes are possible:
+</p>
+
+<ul>
+  <li><strong>Killed</strong> — at least one test fails. The test suite detects this fault. Good.</li>
+  <li><strong>Survived</strong> — all tests pass. The test suite does not detect this fault. Bad.</li>
+  <li><strong>Equivalent</strong> — the mutation produces semantically identical behavior (e.g., changing iteration order in a set). Neither good nor bad.</li>
+</ul>
+
+<p>
+  The <strong>mutation score</strong> is the percentage of non-equivalent mutants killed:
+</p>
+
+<pre><code>mutation_score = killed / (total - equivalent)</code></pre>
+
+<p>
+  A mutation score of 80% means your tests would catch 80% of small faults in the code. Compare this to
+  line coverage, which tells you nothing about fault detection.
+</p>
+
+<h2>PIT (Pitest)</h2>
+
+<p>
+  <strong>PIT</strong> is the standard mutation testing tool for Java. It is mature, fast (uses bytecode
+  manipulation, not source rewriting), and integrates with Maven, Gradle, and all major CI systems.
+</p>
+
+<h3>Basic configuration (Maven)</h3>
+
+<pre><code>&lt;plugin&gt;
+  &lt;groupId&gt;org.pitest&lt;/groupId&gt;
+  &lt;artifactId&gt;pitest-maven&lt;/artifactId&gt;
+  &lt;version&gt;1.15.0&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;targetClasses&gt;
+      &lt;param&gt;com.example.pricing.*&lt;/param&gt;
+    &lt;/targetClasses&gt;
+    &lt;targetTests&gt;
+      &lt;param&gt;com.example.pricing.*Test&lt;/param&gt;
+    &lt;/targetTests&gt;
+    &lt;mutators&gt;
+      &lt;mutator&gt;DEFAULTS&lt;/mutator&gt;
+    &lt;/mutators&gt;
+    &lt;timeoutConstant&gt;5000&lt;/timeoutConstant&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
+
+<p>
+  Key configuration decisions:
+</p>
+
+<ul>
+  <li><strong>Target classes</strong>: Start with critical business logic (pricing, auth, data validation). Do not start with the full codebase.</li>
+  <li><strong>Mutators</strong>: <code>DEFAULTS</code> is a good starting point. Add <code>STRONGER</code> once the team is comfortable.</li>
+  <li><strong>Timeout</strong>: Increase from default if tests involve I/O or threading.</li>
+  <li><strong>Threshold</strong>: Set a <code>mutationThreshold</code> to fail the build below a target score (e.g., 75%).</li>
+</ul>
+
+<Callout type="info" title="Speed matters">
+  <p>
+    PIT is fast because it operates on bytecode, not source code. It also uses coverage data to skip
+    mutants that no test reaches. A typical module with 50 classes runs in 2-5 minutes. Full-codebase
+    runs are better suited for nightly CI.
+  </p>
+</Callout>
+
+<h2>AI-Augmented Mutation Testing</h2>
+
+<p>
+  Traditional mutation testing uses fixed syntactic operators. AI-augmented mutation testing uses large
+  language models to generate more realistic, semantically meaningful faults — and to automatically
+  write tests that close the gaps. This is the renaissance of mutation testing.
+</p>
+
+<h3>Meta's ACH: Automated Compliance Hardening</h3>
+
+<p>
+  Published at FSE 2025, Meta's <strong>Automated Compliance Hardening (ACH)</strong> uses a two-phase
+  LLM pipeline:
+</p>
+
+<ol>
+  <li><strong>Phase 1: Fault generation</strong> — An LLM analyzes production code and generates realistic
+  compliance faults: missing privacy checks, incorrect data retention, broken access controls. These are
+  not random syntactic mutations but domain-specific, semantically meaningful faults.</li>
+  <li><strong>Phase 2: Test generation</strong> — A second LLM pass generates targeted tests to detect
+  each fault. The tests are reviewed and merged into the test suite.</li>
+</ol>
+
+<p>Key results from Meta's deployment:</p>
+
+<ul>
+  <li><strong>73% acceptance rate</strong> — nearly three quarters of generated tests were accepted by reviewers</li>
+  <li><strong>36% privacy-relevant</strong> — more than a third of generated faults targeted privacy-critical code paths</li>
+  <li><strong>Deployed across Facebook, Instagram, WhatsApp</strong> — production-scale validation</li>
+</ul>
+
+<h3>Atlassian's Approach</h3>
+
+<p>
+  Atlassian's <strong>Rovo Dev CLI</strong> takes a different approach: instead of generating faults,
+  it guides an LLM through closing mutation coverage gaps identified by traditional mutation testing tools.
+</p>
+
+<p>
+  The CLI runs PIT, identifies surviving mutants, and prompts the LLM with mutant-type-specific guidelines
+  to generate tests that kill those specific mutants.
+</p>
+
+<p>Results from Atlassian's internal deployment:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Before</th>
+      <th>After</th>
+      <th>Improvement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Project A</td>
+      <td>56%</td>
+      <td>80%</td>
+      <td>+24 points</td>
+    </tr>
+    <tr>
+      <td>Project B</td>
+      <td>70%</td>
+      <td>88%</td>
+      <td>+18 points</td>
+    </tr>
+    <tr>
+      <td>Project C</td>
+      <td>83%</td>
+      <td>96%</td>
+      <td>+13 points</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Key learning from Atlassian">
+  <p>
+    Mutant-type-specific guidelines outperform generic instructions. Telling the LLM "write a test for this
+    surviving mutant" produces weaker results than telling it "this boundary condition mutant survived
+    because no test checks the edge case where quantity equals exactly the threshold — write a test
+    that asserts behavior at that boundary."
+  </p>
+</Callout>
+
+<h2>Practical deployment</h2>
+
+<p>
+  Mutation testing is computationally expensive. A tiered deployment strategy keeps it practical:
+</p>
+
+<h3>Tier 1: PR-level (changed files only)</h3>
+<ul>
+  <li>Run PIT only on classes modified in the pull request</li>
+  <li>Fast — typically under 2 minutes</li>
+  <li>Catches regressions in test quality for new or changed code</li>
+  <li>Enforce mutation score threshold on changed files (e.g., 75%)</li>
+</ul>
+
+<h3>Tier 2: Module-level in CI</h3>
+<ul>
+  <li>Run PIT on the full module containing changes</li>
+  <li>Catches interaction effects between changed and unchanged code</li>
+  <li>Runs in 5-15 minutes depending on module size</li>
+</ul>
+
+<h3>Tier 3: Full codebase nightly</h3>
+<ul>
+  <li>Complete mutation analysis across the entire codebase</li>
+  <li>Produces trend reports for mutation score over time</li>
+  <li>Identifies modules with degrading test quality</li>
+</ul>
+
+<p>
+  Regardless of tier, focus mutation testing on <strong>critical paths first</strong>: pricing logic,
+  authentication and authorization, data validation, financial calculations. These are the areas where
+  undetected faults cause the most damage.
+</p>
+
+<h2>Tools landscape</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Language</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PIT (Pitest)</strong></td>
+      <td>Java / JVM</td>
+      <td>The standard. Bytecode-level mutation, fast, mature. Maven and Gradle plugins.</td>
+    </tr>
+    <tr>
+      <td><strong>Stryker</strong></td>
+      <td>JavaScript / C# / .NET</td>
+      <td>Multi-language framework. Strong JavaScript and .NET support. Dashboard for tracking.</td>
+    </tr>
+    <tr>
+      <td><strong>mutmut</strong></td>
+      <td>Python</td>
+      <td>Simple, pragmatic. Works with pytest. Good for Python projects.</td>
+    </tr>
+    <tr>
+      <td><strong>cargo-mutants</strong></td>
+      <td>Rust</td>
+      <td>Rust-native. Integrates with cargo test. Focuses on return-value mutations.</td>
+    </tr>
+    <tr>
+      <td><strong>Infection</strong></td>
+      <td>PHP</td>
+      <td>PHP mutation testing framework with AST-based mutations.</td>
+    </tr>
+    <tr>
+      <td><strong>Humbug</strong></td>
+      <td>PHP</td>
+      <td>Predecessor to Infection. Still used in some legacy projects.</td>
+    </tr>
+  </tbody>
+</table>
+
+</DocLayout>

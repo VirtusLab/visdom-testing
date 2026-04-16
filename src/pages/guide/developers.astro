@@ -1,0 +1,235 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="For Developers"
+  subtitle="Practical guide to writing better tests for AI-generated code."
+  section="Home"
+  tags={[{ label: "Guide", variant: "green" }, { label: "Developers", variant: "outline" }]}
+  prev={{ label: "For Platform Engineers", href: `${base}guide/platform-engineers/` }}
+>
+
+<h2>Why your tests aren't catching bugs</h2>
+
+<p>
+  Coverage measures which lines executed, not whether your tests would catch a bug on those lines.
+  This creates the <strong>90%/0 paradox</strong>: 90% line coverage, 0 computation bugs caught.
+</p>
+
+<p>
+  In our case study, 16 hand-written tests achieved 90% line coverage on a pricing module. They
+  tested specific examples: "price of item A is $10.00." But they never tested the edge cases
+  where rounding and discount interactions produced wrong results. The tests executed the code
+  without actually verifying its correctness.
+</p>
+
+<p>
+  When AI generates both code and tests, this problem gets worse. The AI encodes the same assumptions
+  in both. If the implementation rounds too early, the test expects the too-early-rounded result.
+  Everything passes. Everything is wrong.
+</p>
+
+<h2>ArchUnit in 5 minutes</h2>
+
+<p>
+  ArchUnit lets you write architecture rules as executable tests. They run in your normal test suite,
+  take less than 10 seconds, and catch structural violations that code review misses.
+</p>
+
+<h3>Step 1: Add the dependency</h3>
+<pre><code>&lt;!-- Maven --&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;com.tngtech.archunit&lt;/groupId&gt;
+  &lt;artifactId&gt;archunit-junit5&lt;/artifactId&gt;
+  &lt;version&gt;1.3.0&lt;/version&gt;
+  &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+
+<h3>Step 2: Write your first rule</h3>
+<pre><code>@ArchTest
+static final ArchRule controllers_should_not_access_repositories =
+    noClasses()
+        .that().resideInAPackage("..controller..")
+        .should().accessClassesThat()
+        .resideInAPackage("..repository..");
+</code></pre>
+
+<h3>Step 3: See it catch AI violations</h3>
+<p>
+  Ask Copilot to generate a Spring controller. Without this rule, 10/10 times it will call the
+  repository directly, bypassing the service layer. With this rule in your test suite, the AI gets
+  a build failure and fixes the violation on retry.
+</p>
+
+<Callout type="tip" title="Start with these 3 rules">
+  <p>
+    1. Controllers must not access repositories directly.<br />
+    2. No field injection (use constructor injection).<br />
+    3. No generic exceptions (throw specific types).
+  </p>
+  <p>These three rules catch the most common AI-generated architecture violations.</p>
+</Callout>
+
+<h2>Writing your first property</h2>
+
+<p>
+  Property-based testing flips the script: instead of writing specific examples, you declare
+  properties that must hold for <em>all</em> valid inputs. The framework generates thousands
+  of inputs and checks each one.
+</p>
+
+<h3>Start with invariants</h3>
+<pre><code>@Property
+void totalShouldNeverBeNegative(
+    @ForAll @Positive BigDecimal unitPrice,
+    @ForAll @IntRange(min = 1, max = 10000) int quantity,
+    @ForAll @BigRange(min = "0", max = "50") BigDecimal discountPercent
+) {'{'}
+    BigDecimal total = pricingService.calculateTotal(
+        unitPrice, quantity, discountPercent
+    );
+    assertThat(total).isGreaterThanOrEqualTo(BigDecimal.ZERO);
+{'}'}</code></pre>
+
+<p>
+  This single property tests with 1000+ random combinations. It catches edge cases you would never
+  think to write by hand: tiny unit prices with large quantities, discounts that round to exactly
+  zero, boundary interactions.
+</p>
+
+<h3>Then add oracle properties</h3>
+<p>
+  An oracle is a simpler reference implementation that you compare against. This is where the real
+  bugs are caught.
+</p>
+
+<h2>The oracle pattern</h2>
+
+<p>
+  Compare your optimized production function against a naive but obviously correct reference.
+  Any disagreement is a bug in one of them.
+</p>
+
+<pre><code>@Property
+void pricingShouldMatchReferenceImplementation(
+    @ForAll @Positive BigDecimal unitPrice,
+    @ForAll @IntRange(min = 1, max = 10000) int quantity,
+    @ForAll @BigRange(min = "0", max = "50") BigDecimal discountPercent
+) {'{'}
+    // Production implementation (optimized)
+    BigDecimal actual = pricingService.calculateTotal(
+        unitPrice, quantity, discountPercent
+    );
+
+    // Reference oracle (naive but correct)
+    BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    BigDecimal discountAmount = subtotal.multiply(
+        discountPercent.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
+    );
+    BigDecimal expected = subtotal.subtract(discountAmount)
+        .setScale(2, RoundingMode.HALF_UP);
+
+    assertThat(actual).isEqualByComparingTo(expected);
+{'}'}</code></pre>
+
+<Callout type="info" title="Case study: pricing module">
+  <p>
+    This exact pattern found 2 bugs that 90% coverage missed: early rounding of the discount rate
+    and wrong rounding mode on VAT calculation. The minimal counterexample was:
+    <code>unitPrice=0.01, qty=48, discount=1.05%</code>.
+  </p>
+</Callout>
+
+<h2>When NOT to use PBT</h2>
+
+<ul>
+  <li>
+    <strong>Integration tests</strong> &mdash; PBT generates thousands of inputs. If each input hits
+    a database or external service, your tests will be too slow. Use PBT for pure computation logic.
+  </li>
+  <li>
+    <strong>Simple CRUD</strong> &mdash; If your method just saves an entity and returns it, there is
+    no interesting property to declare. Example-based tests are fine here.
+  </li>
+  <li>
+    <strong>UI rendering</strong> &mdash; There are rarely meaningful properties to declare about
+    visual output. Use snapshot tests or visual regression tools instead.
+  </li>
+</ul>
+
+<h2>Reading mutation reports</h2>
+
+<p>
+  Mutation testing modifies your code (creates "mutants") and checks if your tests catch the change.
+  Here is what the results mean:
+</p>
+
+<ul>
+  <li>
+    <strong>Killed</strong> &mdash; Your tests detected the mutant. Good. This means the test would
+    catch a real bug in that code.
+  </li>
+  <li>
+    <strong>Survived</strong> &mdash; Your tests did NOT detect the mutant. Bad. This means a real
+    bug in that code would go unnoticed. Focus your testing effort here.
+  </li>
+  <li>
+    <strong>Equivalent</strong> &mdash; The mutant is functionally identical to the original (e.g.,
+    replacing <code>x &gt; 0</code> with <code>x &gt;= 1</code> for integers). Not a test gap.
+  </li>
+</ul>
+
+<Callout type="warning" title="Focus on critical code">
+  <p>
+    Do not chase 100% mutation score across the entire codebase. Focus on survived mutants in
+    <strong>critical code paths</strong>: pricing, authentication, authorization, financial calculations.
+    A survived mutant in a toString() method is not worth your time.
+  </p>
+</Callout>
+
+<h2>Anti-patterns to avoid</h2>
+
+<ul>
+  <li>
+    <strong>Testing implementation, not behavior</strong> &mdash; If your test breaks when you
+    refactor internals without changing behavior, it is testing the wrong thing. Test what the code
+    does, not how it does it.
+  </li>
+  <li>
+    <strong>Mocking everything</strong> &mdash; When every dependency is mocked, your test only
+    verifies that you called the mocks in the expected order. It does not verify that the system
+    actually works. Use real dependencies where possible; mock only external services.
+  </li>
+  <li>
+    <strong>Ignoring flaky tests</strong> &mdash; A flaky test is not "probably fine." It is either
+    testing something nondeterministic (fix it) or has a real race condition (that is a real bug).
+  </li>
+  <li>
+    <strong>100% coverage as a goal</strong> &mdash; Coverage is a minimum bar, not a target.
+    Chasing 100% leads to trivial tests on getters/setters that catch nothing. Mutation score
+    is a better measure of test effectiveness.
+  </li>
+</ul>
+
+<h2>TDD in the AI era</h2>
+
+<p>
+  Test-driven development becomes more important, not less, when AI generates code. The workflow:
+</p>
+
+<ol>
+  <li><strong>Write a failing test first</strong> &mdash; Define what the code should do before any code exists. This is your specification.</li>
+  <li><strong>Let AI implement</strong> &mdash; Give the AI the failing test and let it write the implementation. The test constrains what the AI can produce.</li>
+  <li><strong>Verify with PBT</strong> &mdash; Add property-based tests to catch edge cases the AI did not consider. The properties are your safety net.</li>
+  <li><strong>Check with mutation testing</strong> &mdash; Confirm that your tests actually verify behavior, not just execute code.</li>
+</ol>
+
+<p>
+  The tests are your specification. When AI generates code, the tests tell it what "correct" means.
+  Without tests-first, you are asking the AI to guess your requirements.
+</p>
+
+</DocLayout>

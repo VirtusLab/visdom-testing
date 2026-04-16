@@ -1,0 +1,12 @@
+---
+import { FaqAccordion as FaqAccordionReact } from '@virtuslab/visdom-ui';
+import type { FaqItem } from '@virtuslab/visdom-ui';
+
+interface Props {
+  items: FaqItem[];
+  className?: string;
+}
+
+const { items, className } = Astro.props;
+---
+<FaqAccordionReact client:load items={items} className={className} />

@@ -1,0 +1,14 @@
+---
+import { PersonaCard as PersonaCardReact } from '@virtuslab/visdom-ui';
+
+interface Props {
+  name: string;
+  role: string;
+  color?: 'green' | 'blue' | 'purple' | 'amber' | 'red';
+}
+
+const props = Astro.props;
+---
+<PersonaCardReact {...props}>
+  <slot />
+</PersonaCardReact>

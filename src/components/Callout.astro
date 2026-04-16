@@ -1,0 +1,13 @@
+---
+import { Callout as CalloutReact } from '@virtuslab/visdom-ui';
+
+interface Props {
+  type?: 'info' | 'warning' | 'tip' | 'reference';
+  title?: string;
+}
+
+const { type = 'info', title } = Astro.props;
+---
+<CalloutReact type={type} title={title}>
+  <slot />
+</CalloutReact>

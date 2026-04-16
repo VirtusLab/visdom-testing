@@ -1,0 +1,17 @@
+---
+import { HeroSection as HeroSectionReact } from '@virtuslab/visdom-ui';
+
+interface Props {
+  title: string;
+  subtitle: string;
+}
+
+const { title, subtitle } = Astro.props;
+
+const stats = [
+  { value: '90%', label: 'line coverage, 0 bugs caught', detail: 'metrics lie without mutation testing' },
+  { value: '10/10', label: 'AI violations without ArchUnit', detail: '0/10 with architecture tests' },
+  { value: '$512M', label: 'annual cost of flaky tests', detail: 'industry-wide productivity drain' },
+];
+---
+<HeroSectionReact title={title} subtitle={subtitle} stats={stats} variant="dark" />

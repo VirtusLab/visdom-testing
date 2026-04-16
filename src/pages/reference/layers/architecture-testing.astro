@@ -1,0 +1,337 @@
+---
+import DocLayout from '../../../layouts/DocLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import LayerBadge from '../../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Layer 0: Architecture Testing"
+  subtitle="ArchUnit: executable architecture rules that prevent AI from introducing structural violations."
+  section="Reference"
+  tags={[
+    { label: "Layer 0", variant: "green" },
+    { label: "Deterministic", variant: "outline" }
+  ]}
+  prev={{ label: "Architecture", href: `${base}reference/architecture/` }}
+  next={{ label: "Layer 1: Property-Based Testing", href: `${base}reference/layers/property-based-testing/` }}
+>
+
+<h2>Why architecture tests?</h2>
+
+<p>
+  AI coding assistants optimise for a single objective: make the code compile and the existing tests pass.
+  They take the shortest path to that goal, and the shortest path routinely violates architectural boundaries
+  the compiler cannot see.
+</p>
+
+<p>
+  A controller calls a repository directly, bypassing the service layer. A domain object imports an infrastructure
+  class. A new module introduces a cyclic dependency. None of these trigger a compilation error. None of them
+  fail an existing unit test. All of them erode the architecture over time.
+</p>
+
+<p>
+  Architecture tests make these invisible constraints visible and enforceable. They run as ordinary JUnit tests,
+  execute in milliseconds, and fail <strong>before</strong> the code leaves the developer's machine.
+</p>
+
+<h2>ArchUnit in 60 seconds</h2>
+
+<p>
+  <strong>ArchUnit</strong> is a Java library that scans compiled bytecode and lets you express architectural rules
+  as executable tests. No infrastructure required. No special build plugins. Just a test dependency and JUnit
+  integration.
+</p>
+
+<ul>
+  <li>Scans <code>.class</code> files — works with any JVM language (Java, Kotlin, Scala)</li>
+  <li>Integrates with JUnit 5 natively</li>
+  <li>Runs in milliseconds — suitable for pre-push hooks</li>
+  <li>No infrastructure, no Docker, no external services</li>
+</ul>
+
+<p>Here is a rule that prevents controllers from accessing repositories directly:</p>
+
+<pre><code>@Test
+public void controllersShouldNotAccessRepositoriesDirectly() {'{'}
+    noClasses()
+        .that().resideInAPackage("..controller..")
+        .should().dependOnClassesThat()
+        .resideInAPackage("..repository..")
+        .check(importedClasses);
+{'}'}</code></pre>
+
+<p>
+  When an AI agent generates a controller that injects a repository, this test fails instantly with a clear
+  message identifying the offending dependency. The agent receives the failure, corrects the code, and
+  the architecture stays intact.
+</p>
+
+<h2>Pattern 1: Technology Migration</h2>
+
+<p>
+  AI models are trained on millions of lines of legacy code. When you ask them to make an HTTP call,
+  they default to <code>RestTemplate</code> — deprecated since Spring 6.1. When writing tests, they
+  reach for JUnit 4 annotations. For date handling, they import <code>java.util.Date</code>.
+</p>
+
+<p>
+  Architecture tests turn migration decisions into enforceable rules:
+</p>
+
+<pre><code>@Test
+public void noClassesShouldUseRestTemplate() {'{'}
+    noClasses()
+        .should().dependOnClassesThat()
+        .haveFullyQualifiedName("org.springframework.web.client.RestTemplate")
+        .because("RestTemplate is deprecated since Spring 6.1; use RestClient instead")
+        .check(importedClasses);
+{'}'}</code></pre>
+
+<p>
+  This pattern applies to any technology migration:
+</p>
+
+<ul>
+  <li><code>RestTemplate</code> &rarr; <code>RestClient</code></li>
+  <li>JUnit 4 (<code>@org.junit.Test</code>) &rarr; JUnit 5 (<code>@org.junit.jupiter.api.Test</code>)</li>
+  <li><code>java.util.Date</code> / <code>Calendar</code> &rarr; <code>java.time.*</code></li>
+  <li>Apache Commons <code>StringUtils</code> &rarr; JDK built-in methods</li>
+</ul>
+
+<h2>Pattern 2: Legacy Codebases</h2>
+
+<p>
+  Greenfield projects can enforce strict rules from day one. Legacy codebases cannot. ArchUnit's
+  <code>FreezingArchRule</code> solves this: it records the current violations as a baseline and
+  only fails on <strong>new</strong> violations.
+</p>
+
+<pre><code>@Test
+public void noNewLayerViolations() {'{'}
+    FreezingArchRule.freeze(
+        layeredArchitecture()
+            .consideringAllDependencies()
+            .layer("Controller").definedBy("..controller..")
+            .layer("Service").definedBy("..service..")
+            .layer("Repository").definedBy("..repository..")
+            .whereLayer("Controller").mayOnlyAccessLayers("Service")
+            .whereLayer("Service").mayOnlyAccessLayers("Repository")
+            .whereLayer("Repository").mayNotAccessAnyLayer()
+    ).check(importedClasses);
+{'}'}</code></pre>
+
+<p>
+  The first run creates a violation store (typically committed to version control). Subsequent runs
+  only fail if new violations appear. As you fix existing violations, update the baseline. This
+  enables incremental adoption without a massive upfront refactoring effort.
+</p>
+
+<h2>Pattern 3: Architectural Boundaries</h2>
+
+<p>
+  Beyond simple layering, ArchUnit enforces structural rules that prevent architectural erosion:
+</p>
+
+<pre><code>@Test
+public void domainModelShouldNotDependOnInfrastructure() {'{'}
+    noClasses()
+        .that().resideInAPackage("..domain..")
+        .should().dependOnClassesThat()
+        .resideInAnyPackage("..infrastructure..", "..controller..", "..config..")
+        .because("Domain model must remain framework-independent")
+        .check(importedClasses);
+{'}'}
+
+@Test
+public void noCircularDependenciesBetweenPackages() {'{'}
+    slices().matching("com.example.(*)..")
+        .should().beFreeOfCycles()
+        .check(importedClasses);
+{'}'}
+
+@Test
+public void orderModuleShouldNotAccessCustomerInternals() {'{'}
+    noClasses()
+        .that().resideInAPackage("..order..")
+        .should().dependOnClassesThat()
+        .resideInAPackage("..customer.internal..")
+        .check(importedClasses);
+{'}'}</code></pre>
+
+<p>
+  These rules enforce: clean domain boundaries, acyclic module structure, and controlled
+  cross-domain access. The compiler sees none of these — ArchUnit sees all of them.
+</p>
+
+<h2>Pattern 4: Unwritten Standards</h2>
+
+<p>
+  Every team has conventions that exist only in tribal knowledge: "we don't use field injection,"
+  "never call Thread.sleep in production code," "<code>@Transactional</code> goes on service classes, not repositories."
+  AI agents have no access to this knowledge.
+</p>
+
+<pre><code>@Test
+public void noFieldInjection() {'{'}
+    noFields()
+        .should().beAnnotatedWith("org.springframework.beans.factory.annotation.Autowired")
+        .because("Decision 2023-03: use constructor injection for testability")
+        .check(importedClasses);
+{'}'}
+
+@Test
+public void noThreadSleepInProductionCode() {'{'}
+    noClasses()
+        .that().resideOutsideOfPackage("..test..")
+        .should().callMethod(Thread.class, "sleep", long.class)
+        .because("Decision 2024-01: use ScheduledExecutorService or @Scheduled")
+        .check(importedClasses);
+{'}'}
+
+@Test
+public void transactionalOnlyOnServiceLayer() {'{'}
+    noClasses()
+        .that().resideInAPackage("..repository..")
+        .should().beAnnotatedWith("org.springframework.transaction.annotation.Transactional")
+        .because("Decision 2023-07: service layer owns transaction boundaries")
+        .check(importedClasses);
+{'}'}</code></pre>
+
+<p>
+  Each rule names the decision it enforces. When a test fails, the developer (or AI agent)
+  sees not just <em>what</em> is wrong but <em>why</em> the team decided against it.
+</p>
+
+<h2>Controlled Experiment</h2>
+
+<p>
+  We ran a controlled experiment: the same AI agent, the same CRUD task (create an Order
+  entity with controller, service, and repository layers), 10 repetitions across 3 variants.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Raw Agent</th>
+      <th>Agent + Loop</th>
+      <th>Agent + Loop + ArchUnit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Layer bypass (controller &rarr; repository)</td>
+      <td>10/10</td>
+      <td>7/10</td>
+      <td><strong>0/10</strong></td>
+    </tr>
+    <tr>
+      <td>Deprecated API usage (RestTemplate)</td>
+      <td>8/10</td>
+      <td>6/10</td>
+      <td><strong>0/10</strong></td>
+    </tr>
+    <tr>
+      <td>Field injection</td>
+      <td>9/10</td>
+      <td>5/10</td>
+      <td><strong>0/10</strong></td>
+    </tr>
+    <tr>
+      <td>Cyclic dependencies</td>
+      <td>4/10</td>
+      <td>3/10</td>
+      <td><strong>0/10</strong></td>
+    </tr>
+    <tr>
+      <td>Passes all architecture rules</td>
+      <td>0/10</td>
+      <td>0/10</td>
+      <td><strong>10/10</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Key finding">
+  <p>
+    The agentic loop alone reduces some violations but does not eliminate them. ArchUnit rules achieve
+    <strong>0/10 violations</strong> across every category because the agent cannot mark the task as
+    complete while tests are failing. The rules are deterministic, binary, and non-negotiable.
+  </p>
+</Callout>
+
+<h2>Deployment Strategy</h2>
+
+<p>
+  Architecture tests work best in two tiers:
+</p>
+
+<h3>Tier 1: Focused Local Suite (&lt;10 seconds)</h3>
+<ul>
+  <li>5-15 high-value rules covering the most common AI violations</li>
+  <li>Runs as a pre-push hook or within the AI agent's feedback loop</li>
+  <li>Catches issues before code leaves the developer's machine</li>
+  <li>Feedback time under 10 seconds — fast enough for interactive development</li>
+</ul>
+
+<h3>Tier 2: Full Suite in CI</h3>
+<ul>
+  <li>Complete rule set including domain boundaries, naming conventions, and freezing rules</li>
+  <li>Runs on every pull request</li>
+  <li>Includes baseline management for legacy codebases</li>
+  <li>Produces architecture compliance reports</li>
+</ul>
+
+<h3>Integration with AI Agents</h3>
+<p>
+  When integrated into an agentic coding loop, architecture tests act as guardrails. The agent generates
+  code, runs the architecture tests, receives structured failure messages, and corrects the code — all
+  within a single iteration. The agent never sees a "green build" until the architecture is correct.
+</p>
+
+<h2>Cross-ecosystem equivalents</h2>
+
+<p>
+  ArchUnit is the gold standard for the JVM, but every ecosystem has analogous tools:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Ecosystem</th>
+      <th>Tool</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>.NET</td>
+      <td><strong>NetArchTest</strong> / <strong>ArchUnitNET</strong></td>
+      <td>Same fluent API style as ArchUnit, scans .NET assemblies</td>
+    </tr>
+    <tr>
+      <td>JavaScript / TypeScript</td>
+      <td><strong>eslint-plugin-boundaries</strong></td>
+      <td>ESLint rules for module boundary enforcement</td>
+    </tr>
+    <tr>
+      <td>Python</td>
+      <td><strong>import-linter</strong></td>
+      <td>Enforces import rules based on declared contracts</td>
+    </tr>
+    <tr>
+      <td>Go</td>
+      <td><strong>go-cleanarch</strong></td>
+      <td>Checks clean architecture dependency rules</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  The principle is universal: if you have a convention the compiler cannot enforce,
+  write a test that can.
+</p>
+
+</DocLayout>

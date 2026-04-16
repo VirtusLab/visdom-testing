@@ -1,0 +1,13 @@
+---
+import { StatCard as StatCardReact } from '@virtuslab/visdom-ui';
+
+interface Props {
+  value: string;
+  label: string;
+  source: string;
+  color: 'green' | 'blue' | 'amber' | 'red' | 'purple';
+}
+
+const props = Astro.props;
+---
+<StatCardReact {...props} />

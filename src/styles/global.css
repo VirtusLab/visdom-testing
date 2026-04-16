@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@source "../../node_modules/@virtuslab/visdom-ui/dist";
+
+@theme {
+  --color-visdom-green: #10b981;
+  --color-visdom-green-light: #ecfdf5;
+  --color-visdom-green-dark: #059669;
+  --color-visdom-gray-50: #f9fafb;
+  --color-visdom-gray-100: #f3f4f6;
+  --color-visdom-gray-200: #e5e7eb;
+  --color-visdom-gray-300: #d1d5db;
+  --color-visdom-gray-400: #9ca3af;
+  --color-visdom-gray-500: #6b7280;
+  --color-visdom-gray-600: #4b5563;
+  --color-visdom-gray-700: #374151;
+  --color-visdom-gray-800: #1f2937;
+  --color-visdom-gray-900: #111827;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --max-width-doc: 48rem;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-visdom-gray-600 antialiased;
+  }
+
+  h1 { @apply text-3xl font-bold tracking-tight text-visdom-gray-900 mb-3; }
+  h2 { @apply text-2xl font-bold text-visdom-gray-900 mt-14 mb-5; }
+  h3 { @apply text-xl font-semibold text-visdom-gray-900 mt-10 mb-4; }
+
+  p { @apply text-base leading-relaxed text-visdom-gray-600 mb-5; }
+
+  a { @apply text-visdom-green hover:text-visdom-green-dark transition-colors; }
+
+  ul { @apply list-disc pl-6 mb-5 space-y-1.5; }
+  ul li { @apply text-visdom-gray-600 leading-relaxed; }
+
+  code {
+    @apply bg-visdom-gray-100 text-visdom-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  pre {
+    @apply bg-visdom-gray-100 text-visdom-gray-800 rounded-lg p-4 overflow-x-auto mb-6 text-sm leading-6;
+  }
+  pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+
+  table {
+    @apply w-full text-sm mb-6;
+  }
+  thead { @apply border-b-2 border-visdom-gray-200; }
+  th { @apply text-left py-2.5 px-3 font-semibold text-visdom-gray-900; }
+  td { @apply py-2.5 px-3 text-visdom-gray-600 border-b border-visdom-gray-200; }
+}

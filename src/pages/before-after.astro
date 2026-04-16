@@ -1,0 +1,145 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import BeforeAfter from '../components/BeforeAfter.astro';
+import Callout from '../components/Callout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Before / After Scenarios"
+  subtitle="Concrete scenarios showing what changes when Visdom Testing is deployed."
+  section="Home"
+  tags={[{ label: "Scenarios", variant: "blue" }]}
+>
+
+<p>
+  Each scenario is drawn from real patterns observed across enterprise teams adopting AI-assisted
+  development. The "before" reflects what happens with standard testing practices. The "after"
+  shows what changes when Visdom Testing layers are in place.
+</p>
+
+<h2>Scenario 1: AI generates a pricing module</h2>
+
+<BeforeAfter
+  title="Pricing module with AI-generated tests"
+  impacts={[
+    { label: "Bugs found", before: "0", after: "2" },
+    { label: "False confidence", before: "High", after: "Eliminated" },
+  ]}
+>
+  <Fragment slot="before">
+    <p>Copilot generates a pricing calculation module along with 10 unit tests.</p>
+    <ol>
+      <li>Tests achieve <strong>90% line coverage</strong>.</li>
+      <li>Code review looks clean &mdash; all tests pass, coverage is high.</li>
+      <li>Code ships to production.</li>
+      <li>Two rounding bugs discovered by customers weeks later.</li>
+    </ol>
+  </Fragment>
+  <Fragment slot="after">
+    <p>PBT finds 2 rounding bugs via oracle properties before the code leaves the PR.</p>
+    <ol>
+      <li>Oracle property compares production implementation against naive reference.</li>
+      <li>jqwik generates 1000+ input combinations and finds a discrepancy.</li>
+      <li>Automatic shrinking produces minimal counterexample: <strong>unitPrice=0.01, qty=48, discount=1.05%</strong>.</li>
+      <li>Developer fixes rounding logic before merge.</li>
+    </ol>
+  </Fragment>
+</BeforeAfter>
+
+<h2>Scenario 2: AI generates a Spring service</h2>
+
+<BeforeAfter
+  title="Spring controller with layer violations"
+  impacts={[
+    { label: "Architecture violations", before: "10/10", after: "0/10" },
+    { label: "Fix cost", before: "Production", after: "Build time" },
+  ]}
+>
+  <Fragment slot="before">
+    <p>AI generates a Spring controller that calls the repository directly, bypassing the service layer.</p>
+    <ol>
+      <li>Code compiles successfully.</li>
+      <li>AI-generated tests pass &mdash; everything is mocked.</li>
+      <li>Code review may or may not catch the layer violation.</li>
+      <li>Architecture erodes over time as more controllers bypass services.</li>
+    </ol>
+  </Fragment>
+  <Fragment slot="after">
+    <p>ArchUnit rule catches the layer violation at build time. AI fixes it on retry.</p>
+    <ol>
+      <li>ArchUnit rule: controllers must not access repositories directly.</li>
+      <li>Build fails with a clear violation message.</li>
+      <li>AI regenerates with proper service layer indirection.</li>
+      <li>Result: <strong>0/10 violations</strong> with ArchUnit vs 10/10 without.</li>
+    </ol>
+  </Fragment>
+</BeforeAfter>
+
+<h2>Scenario 3: Migration from RestTemplate to RestClient</h2>
+
+<BeforeAfter
+  title="API migration enforcement"
+  impacts={[
+    { label: "Regression rate", before: "Constant", after: "Zero" },
+    { label: "Senior review time", before: "High", after: "-70%" },
+  ]}
+>
+  <Fragment slot="before">
+    <p>Team decides to migrate from RestTemplate to RestClient. AI keeps introducing RestTemplate.</p>
+    <ol>
+      <li>AI has more RestTemplate examples in training data.</li>
+      <li>Each PR re-fights the same battle: reviewer catches RestTemplate usage, sends it back.</li>
+      <li>Some usages slip through review, especially in large PRs.</li>
+      <li>Migration stalls. Both APIs coexist indefinitely.</li>
+    </ol>
+  </Fragment>
+  <Fragment slot="after">
+    <p>ArchUnit bans RestTemplate. FreezingArchRule allows legacy code. AI gets build failure and uses RestClient.</p>
+    <ol>
+      <li>ArchUnit rule bans <code>RestTemplate</code> imports in new code.</li>
+      <li><code>FreezingArchRule</code> captures existing RestTemplate usages as a baseline.</li>
+      <li>AI generates code, gets a build failure, and uses RestClient on retry.</li>
+      <li>Senior engineers stop reviewing for API migration &mdash; the compiler enforces it.</li>
+    </ol>
+  </Fragment>
+</BeforeAfter>
+
+<h2>Scenario 4: Flaky test plague</h2>
+
+<BeforeAfter
+  title="CI trust restoration"
+  impacts={[
+    { label: "CI trust", before: "Low", after: "High" },
+    { label: "Suite time", before: "45 min", after: "8 min (TIA)" },
+  ]}
+>
+  <Fragment slot="before">
+    <p>Test suite takes 45 minutes. 84% of failures are flaky. Developers lose trust in CI.</p>
+    <ol>
+      <li>Developers merge without waiting for CI results.</li>
+      <li>Real failures get lost in the noise of flaky failures.</li>
+      <li>QA team spends hours triaging failures that turn out to be flakes.</li>
+      <li>Bugs escape to production because the safety net has holes.</li>
+    </ol>
+  </Fragment>
+  <Fragment slot="after">
+    <p>TORS identifies flaky tests. Quarantine + ownership. Predictive test selection restores speed.</p>
+    <ol>
+      <li>TORS (Test Observability and Reliability Score) identifies tests with &lt;98% pass rate.</li>
+      <li>Flaky tests are quarantined: they run but do not block the pipeline.</li>
+      <li>Each quarantined test gets an owner and a fix-by date.</li>
+      <li>Predictive Test Selection (PTS) reduces PR suite to relevant tests: <strong>45 min &rarr; 8 min</strong>.</li>
+    </ol>
+  </Fragment>
+</BeforeAfter>
+
+<Callout type="tip" title="Start with one scenario">
+  <p>
+    You don't need to deploy all layers at once. Pick the scenario that matches your biggest pain point.
+    Flaky tests? Start with TORS and quarantine. Architecture erosion? Start with ArchUnit.
+    Computation bugs? Start with PBT on your critical calculations.
+  </p>
+</Callout>
+
+</DocLayout>

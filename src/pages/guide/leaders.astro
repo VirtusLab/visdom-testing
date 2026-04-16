@@ -1,0 +1,133 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+import Timeline from '../../components/Timeline.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="For Engineering Leaders"
+  subtitle="What Visdom Testing changes for your organization, and what it costs."
+  section="Home"
+  tags={[{ label: "Guide", variant: "green" }, { label: "Leaders", variant: "outline" }]}
+  next={{ label: "For Platform Engineers", href: `${base}guide/platform-engineers/` }}
+>
+
+<h2>The problem you're paying for</h2>
+
+<h3>Metric theater</h3>
+<p>
+  Teams celebrate 90% coverage while shipping pricing bugs to production. Coverage measures which
+  lines executed, not whether your tests would catch a bug. In our case study, 90% line coverage
+  and 16 hand-written tests missed both computation bugs in a pricing module. <strong>Coverage is not quality.</strong>
+</p>
+
+<h3>Flaky tests destroy trust</h3>
+<p>
+  84% of CI test failures are flaky, not real regressions (Google). Developers learn to ignore
+  the signal. They merge without waiting for CI. The test suite becomes background noise &mdash;
+  expensive background noise.
+</p>
+
+<Callout type="warning" title="The cost of flaky tests">
+  <p>
+    8% of developer time spent on flaky tests &times; $150K average engineer cost &times; 50 engineers
+    = <strong>$600K/year wasted</strong> on tests that don't tell you anything real.
+  </p>
+</Callout>
+
+<h3>AI amplifies the problem</h3>
+<p>
+  AI generates code AND tests from the same context. The tests mirror the implementation instead of
+  verifying behavior. You get a circle of false confidence: the AI writes code with a rounding bug,
+  then writes tests that encode the same rounding assumption. Everything passes. Everything is wrong.
+</p>
+
+<h3>Architecture erosion</h3>
+<p>
+  AI takes the shortest path to compilation. Controllers call repositories directly. Services use
+  deprecated APIs because they appear more frequently in training data. There is no compiler enforcement
+  for architecture decisions &mdash; unless you add one.
+</p>
+
+<h2>What changes</h2>
+
+<p>
+  Visdom Testing introduces a multi-layered testing strategy where each layer catches a different
+  class of defect:
+</p>
+
+<ul>
+  <li>
+    <strong>ArchUnit guards structure</strong> &mdash; Deterministic architecture rules that run in
+    under 10 seconds. Free to execute. In controlled experiments, 10/10 AI generations violated layer
+    boundaries without ArchUnit, 0/10 with it.
+  </li>
+  <li>
+    <strong>Property-based testing catches computation bugs</strong> &mdash; Instead of testing
+    specific examples, PBT declares properties that must hold for all valid inputs. Case study: PBT
+    found 2 bugs in a pricing module that 90% line coverage and 16 hand-written tests missed.
+  </li>
+  <li>
+    <strong>Mutation testing measures real effectiveness</strong> &mdash; PIT introduces small code
+    changes (mutants) and checks if your tests catch them. This is the true measure of test quality.
+    A high mutation score means your tests actually verify behavior, not just execute code.
+  </li>
+  <li>
+    <strong>Contract testing verifies cross-service correctness</strong> &mdash; Pact contracts ensure
+    API consumers and providers stay compatible without full integration environments.
+  </li>
+</ul>
+
+<h2>The math</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Before</th>
+      <th>After</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Testing hours per sprint</td>
+      <td>Manual review + flaky triage (high)</td>
+      <td>Automated multi-layer (reduced 40-60%)</td>
+    </tr>
+    <tr>
+      <td>Bugs escaping to production</td>
+      <td>Computation + architecture bugs ship</td>
+      <td>Caught at build/PR time</td>
+    </tr>
+    <tr>
+      <td>CI reliability</td>
+      <td>84% flaky failure rate</td>
+      <td>&lt;2% flakiness budget with quarantine</td>
+    </tr>
+    <tr>
+      <td>Developer trust in CI</td>
+      <td>Low &mdash; merge without waiting</td>
+      <td>High &mdash; failures mean real problems</td>
+    </tr>
+    <tr>
+      <td>Architecture compliance</td>
+      <td>Manual code review (inconsistent)</td>
+      <td>Automated gate (deterministic)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Deployment timeline</h2>
+
+<Timeline />
+
+<Callout type="info" title="No big bang required">
+  <p>
+    Visdom Testing layers are additive. You don't rewrite your test suite. You add architecture rules,
+    property-based tests, and mutation analysis on top of what you already have. The pilot starts with
+    1-2 modules and expands from there.
+  </p>
+</Callout>
+
+</DocLayout>

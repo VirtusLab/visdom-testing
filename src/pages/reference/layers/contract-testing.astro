@@ -1,0 +1,299 @@
+---
+import DocLayout from '../../../layouts/DocLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import LayerBadge from '../../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Layer 3: Contract & Integration Testing"
+  subtitle="Pact contracts and integration tests verify cross-service correctness."
+  section="Reference"
+  tags={[
+    { label: "Layer 3", variant: "green" },
+    { label: "Microservices", variant: "outline" }
+  ]}
+  prev={{ label: "Layer 2: Mutation-Guided Quality", href: `${base}reference/layers/mutation-testing/` }}
+  next={{ label: "Metrics Framework", href: `${base}reference/metrics/` }}
+>
+
+<h2>The microservice testing challenge</h2>
+
+<p>
+  In a microservice architecture, bugs surface at the boundaries between services. A field is renamed in
+  one service's response; the consuming service breaks. An optional field becomes required; three
+  downstream services fail silently. A new enum value is added; consumers that don't handle it crash.
+</p>
+
+<p>
+  Traditional integration tests address this by deploying multiple services together and testing their
+  interactions end-to-end. But these tests are slow (minutes to start environments), brittle (any
+  service outage breaks the whole suite), and expensive (requires full infrastructure).
+</p>
+
+<p>
+  <strong>Contract testing</strong> verifies that services remain compatible without requiring them to
+  run together. Each service tests against a contract — a formal specification of what it expects and
+  what it provides. If the contracts are compatible, the services will work together in production.
+</p>
+
+<h2>Consumer-Driven Contracts</h2>
+
+<p>
+  The <strong>Consumer-Driven Contract Testing (CDCT)</strong> pattern, implemented by
+  <strong>Pact</strong>, inverts the traditional testing direction: instead of the provider defining
+  the API and consumers adapting to it, consumers declare what they need, and providers verify they
+  still satisfy those needs.
+</p>
+
+<h3>How Pact works</h3>
+
+<ol>
+  <li><strong>Consumer test</strong> — The consumer writes a test that describes the HTTP request it will
+  make and the response it expects. Pact records this as a contract (pact file).</li>
+  <li><strong>Pact Broker</strong> — The contract is published to a central Pact Broker, which stores
+  all contracts and tracks verification status.</li>
+  <li><strong>Provider verification</strong> — The provider runs the contract against its actual implementation.
+  If the provider satisfies all consumer expectations, verification passes.</li>
+  <li><strong>Can I Deploy?</strong> — Before deploying, services query the Pact Broker: "are all my
+  contracts verified against the version I'm deploying to?" Only deploy if the answer is yes.</li>
+</ol>
+
+<pre><code>// Consumer side: Order Service expects User Service response
+@Pact(consumer = "OrderService", provider = "UserService")
+public V4Pact userDetailsPact(PactDslWithProvider builder) {'{'}
+    return builder
+        .given("user with ID 42 exists")
+        .uponReceiving("a request for user details")
+        .path("/users/42")
+        .method("GET")
+        .willRespondWith()
+        .status(200)
+        .body(newJsonBody(body -> {'{'}
+            body.stringType("name", "Alice");
+            body.stringType("email", "alice@example.com");
+            body.booleanType("active", true);
+        {'}'}).build())
+        .toPact(V4Pact.class);
+{'}'}
+
+@Test
+@PactTestFor(pactMethod = "userDetailsPact")
+void shouldFetchUserDetails(MockServer mockServer) {'{'}
+    UserClient client = new UserClient(mockServer.getUrl());
+    UserDetails user = client.getUser(42L);
+
+    assertThat(user.getName()).isEqualTo("Alice");
+    assertThat(user.isActive()).isTrue();
+{'}'}</code></pre>
+
+<Callout type="info" title="40% reduction in integration issues">
+  <p>
+    Teams adopting consumer-driven contracts consistently report a 30-50% reduction in integration
+    issues discovered in staging or production. The issues are caught earlier, in isolated unit-speed
+    tests, before services ever interact.
+  </p>
+</Callout>
+
+<h2>Spring Cloud Contract</h2>
+
+<p>
+  For teams fully within the Spring ecosystem, <strong>Spring Cloud Contract</strong> provides a
+  Spring-native alternative to Pact. It supports both HTTP and messaging contracts, with tight
+  integration into Spring Boot's testing infrastructure.
+</p>
+
+<h3>Key features</h3>
+<ul>
+  <li><strong>Contract DSL</strong> — Contracts written in Groovy or YAML, versioned with the provider</li>
+  <li><strong>Auto-generated stubs</strong> — Contracts automatically produce WireMock stubs for consumers</li>
+  <li><strong>Auto-generated tests</strong> — Contracts automatically generate provider-side verification tests</li>
+  <li><strong>Messaging support</strong> — Contracts for Kafka, RabbitMQ, and other messaging systems</li>
+</ul>
+
+<pre><code>// Contract definition (Groovy DSL)
+Contract.make {'{'}
+    description "should return user details"
+    request {'{'}
+        method GET()
+        url "/users/42"
+    {'}'}
+    response {'{'}
+        status OK()
+        headers {'{'}
+            contentType applicationJson()
+        {'}'}
+        body([
+            name: "Alice",
+            email: "alice@example.com",
+            active: true
+        ])
+    {'}'}
+{'}'}</code></pre>
+
+<p>
+  From this single contract definition, Spring Cloud Contract generates both a provider verification
+  test and a WireMock stub JAR that consumers use in their tests. The contract is the single source
+  of truth.
+</p>
+
+<h2>When to use which</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Best for</th>
+      <th>Strengths</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Pact</strong></td>
+      <td>Polyglot, many consumers</td>
+      <td>Language-agnostic, Pact Broker for governance, "Can I Deploy?" workflow, mature ecosystem</td>
+    </tr>
+    <tr>
+      <td><strong>Spring Cloud Contract</strong></td>
+      <td>Spring ecosystem</td>
+      <td>Deep Spring Boot integration, auto-generated stubs and tests, messaging support</td>
+    </tr>
+    <tr>
+      <td><strong>Specmatic</strong></td>
+      <td>OpenAPI-first teams</td>
+      <td>Uses OpenAPI spec as contract, no separate contract language, schema-first development</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Choosing a tool">
+  <p>
+    If your services span multiple languages (Java, Python, Node.js), use <strong>Pact</strong> — it has
+    client libraries for 12+ languages. If you're all-Spring, <strong>Spring Cloud Contract</strong> offers
+    tighter integration and less ceremony. If you already maintain OpenAPI specs, <strong>Specmatic</strong>
+    eliminates the need for a separate contract definition.
+  </p>
+</Callout>
+
+<h2>Integration testing strategies</h2>
+
+<p>
+  Contract tests verify API compatibility, but they do not test full business flows. You still need
+  integration tests — the question is how many and at what level.
+</p>
+
+<h3>The testing diamond</h3>
+
+<p>
+  The Spotify <strong>honeycomb model</strong> (or "testing diamond") inverts the traditional testing
+  pyramid for microservices. Instead of a wide base of unit tests, the emphasis shifts to:
+</p>
+
+<ul>
+  <li><strong>Broad base of integration tests</strong> — Test service behavior with real dependencies
+  (database, message broker) using Testcontainers</li>
+  <li><strong>Narrow middle of contract tests</strong> — Verify inter-service compatibility</li>
+  <li><strong>Small peak of end-to-end tests</strong> — Only critical user journeys, run sparingly</li>
+</ul>
+
+<p>
+  For domain-heavy services (pricing, rules engines), the traditional pyramid still works: most value
+  comes from unit-level property-based tests. For thin services (API gateways, orchestrators), the
+  diamond is more appropriate: most logic is in the integration, not the computation.
+</p>
+
+<h2>Performance and load testing</h2>
+
+<p>
+  Performance testing ensures that services meet latency and throughput requirements under load. Two
+  tools dominate the modern landscape:
+</p>
+
+<h3>k6</h3>
+<ul>
+  <li>JavaScript-native scripting — tests are code, not XML configurations</li>
+  <li>Grafana integration for real-time dashboards and alerting</li>
+  <li>Cloud execution for distributed load generation</li>
+  <li>Threshold-based pass/fail for CI integration</li>
+</ul>
+
+<h3>Gatling</h3>
+<ul>
+  <li>JVM-based, code-first approach (Scala / Java / Kotlin DSL)</li>
+  <li>Excellent for teams already on the JVM</li>
+  <li>Detailed HTML reports out of the box</li>
+  <li>Recorder for capturing browser interactions</li>
+</ul>
+
+<p>
+  Both tools integrate into CI pipelines as quality gates: define latency thresholds (p99 &lt; 200ms)
+  and throughput minimums, and fail the build if they're not met. Run performance tests on a schedule
+  (nightly or weekly) rather than on every PR to avoid blocking development velocity.
+</p>
+
+<h2>CI/CD Integration</h2>
+
+<p>
+  At scale, running all tests on every change is not feasible. Modern CI strategies use intelligence
+  to select the right tests:
+</p>
+
+<h3>Test Impact Analysis (TIA)</h3>
+<p>
+  Spotify's test infrastructure manages 50,000+ tests across hundreds of services. Test Impact Analysis
+  maps code changes to the tests that exercise them, running only the relevant subset. A change to
+  the pricing module runs pricing tests, not the entire suite.
+</p>
+
+<h3>Predictive Test Selection</h3>
+<p>
+  <strong>Launchable</strong> and similar tools use machine learning to predict which tests are most
+  likely to fail given a code change. Teams report up to <strong>80% reduction in test execution
+  time</strong> with minimal risk of missing failures. The model learns from historical
+  change-to-failure correlations.
+</p>
+
+<h3>Parallelization strategies</h3>
+<ul>
+  <li><strong>Test splitting</strong> — Distribute tests across parallel CI runners by estimated duration</li>
+  <li><strong>Module-level parallelism</strong> — Build and test independent modules concurrently</li>
+  <li><strong>Selective execution</strong> — Run only affected modules based on dependency graph analysis</li>
+</ul>
+
+<p>
+  Combined, these strategies achieve <strong>70-90% reduction in pipeline duration</strong> while
+  maintaining the same defect detection capability. The key is layering: run fast deterministic tests
+  first (architecture, unit), then contracts, then integration, with each layer gating the next.
+</p>
+
+<h2>eBay case study</h2>
+
+<p>
+  eBay adopted consumer-driven contract testing to manage API evolution across its marketplace platform.
+  With hundreds of internal services and frequent API changes, integration test environments were a
+  constant bottleneck.
+</p>
+
+<p>
+  After introducing Pact-based contract testing:
+</p>
+
+<ul>
+  <li><strong>API breaking changes</strong> detected before deployment, not after</li>
+  <li><strong>Integration environment usage</strong> reduced significantly — most compatibility
+  verification happens in isolated CI jobs</li>
+  <li><strong>Deployment confidence</strong> increased — teams deploy independently, knowing their
+  contracts are verified</li>
+  <li><strong>Time to detect compatibility issues</strong> dropped from days (found in staging) to
+  minutes (found in CI)</li>
+</ul>
+
+<Callout type="info" title="Contract testing as a cultural shift">
+  <p>
+    eBay's experience highlights that contract testing is not just a technical practice — it's a cultural
+    shift. Providers must treat consumer contracts as commitments. Breaking a contract is breaking a
+    promise to another team. The Pact Broker makes these commitments visible and enforceable.
+  </p>
+</Callout>
+
+</DocLayout>

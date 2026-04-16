@@ -1,0 +1,304 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+import LayerBadge from '../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Architecture"
+  subtitle="Layered Testing Model: each layer catches a different class of defect."
+  section="Overview"
+  tags={[
+    { label: "Architecture", variant: "green" },
+    { label: "Layered Model", variant: "outline" },
+  ]}
+  prev={{ label: "Overview", href: `${base}` }}
+  next={{ label: "Layer 0: Architecture Testing", href: `${base}reference/layers/architecture-testing/` }}
+>
+
+<h2>Mental Model</h2>
+
+<p>
+  Every code change passes through four testing layers. Each layer catches a different class of defect
+  at a different cost and speed. Lower layers are deterministic and fast; upper layers are thorough and
+  expensive. Together they form a complete testing strategy that addresses the specific failure modes
+  of AI-generated code.
+</p>
+
+<p>
+  The key insight: <strong>no single testing technique catches all defect classes</strong>. Architecture tests
+  catch structural violations. Property-based tests catch computation bugs. Mutation testing measures
+  whether tests would actually catch a bug. Contract tests verify cross-service correctness. Each layer
+  compensates for the blind spots of the others.
+</p>
+
+<h2>Layer Diagram</h2>
+
+<div class="bg-visdom-gray-50 border border-visdom-gray-200 rounded-lg p-6 mb-8 font-mono text-sm">
+<pre class="!bg-transparent !p-0 !mb-0 text-visdom-gray-700"><code>┌──────────────────────────────────────────────────────────┐
+│                   Code Change (PR / Commit)               │
+└──────────────┬───────────────────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────────────────┐
+│  LAYER 0: Architecture Testing               (&lt;10s)      │
+│  ArchUnit rules. Deterministic. Zero AI dependency.      │
+│  Layer boundaries, banned APIs, naming conventions.      │
+└──────────────┬───────────────────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────────────────┐
+│  LAYER 1: Property-Based Testing              (~2s)      │
+│  jqwik properties. 1000+ generated inputs/property.      │
+│  Computation correctness. Breaks circular test problem.  │
+└──────────────┬───────────────────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────────────────┐
+│  LAYER 2: Mutation Testing                    (~5 min)   │
+│  PIT + AI-augmented mutants. Mutation score as the       │
+│  true measure of test effectiveness. Kill the mutants.   │
+└──────────────┬───────────────────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────────────────┐
+│  LAYER 3: Contract Testing                    (~10 min)  │
+│  Pact consumer-driven contracts. Cross-service API       │
+│  compatibility. No full integration env required.        │
+└──────────────┬───────────────────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────────────────┐
+│  DASHBOARD: Quality Intelligence                         │
+│  Mutation score trends, TORS, defect escape rate,        │
+│  flake rate, per-layer health. CI feedback loop.         │
+└──────────────────────────────────────────────────────────┘</code></pre>
+</div>
+
+<h2>Layer Summary</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Type</th>
+      <th>Time</th>
+      <th>Defect Class</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><LayerBadge layer={0} label="L0" /></td>
+      <td>Deterministic</td>
+      <td>&lt;10s</td>
+      <td>Structural</td>
+      <td>Enforce architecture constraints: layer boundaries, banned APIs, naming, dependency rules</td>
+    </tr>
+    <tr>
+      <td><LayerBadge layer={1} label="L1" /></td>
+      <td>Generative</td>
+      <td>~2s</td>
+      <td>Computation</td>
+      <td>Property-based testing with 1000+ inputs. Catch logic errors, rounding bugs, edge cases</td>
+    </tr>
+    <tr>
+      <td><LayerBadge layer={2} label="L2" /></td>
+      <td>Evaluative</td>
+      <td>~5 min</td>
+      <td>Test quality</td>
+      <td>Mutation testing. Measure whether tests would actually catch a bug if one existed</td>
+    </tr>
+    <tr>
+      <td><LayerBadge layer={3} label="L3" /></td>
+      <td>Contractual</td>
+      <td>~10 min</td>
+      <td>Integration</td>
+      <td>Consumer-driven contracts. Verify API compatibility across services without E2E environments</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Key Design Decisions</h2>
+
+<h3>Why Layers</h3>
+
+<p>
+  Each layer catches a fundamentally different class of defect. Architecture tests catch <em>structural violations</em>
+  (controller calling repository directly). Property-based tests catch <em>computation bugs</em> (wrong rounding mode
+  on VAT calculation). Mutation testing catches <em>weak tests</em> (tests that pass regardless of code correctness).
+  Contract tests catch <em>integration breaks</em> (provider changed the API shape).
+</p>
+
+<p>
+  No single layer covers all four. Running all four layers costs less than one production incident.
+</p>
+
+<Callout type="info" title="Defect class coverage">
+  <p>
+    In our controlled experiment, ArchUnit (L0) caught 10/10 structural violations that compiled successfully.
+    Property-based testing (L1) found 2 computation bugs that 90% line coverage and 16 hand-written tests missed.
+    These are orthogonal defect classes: running one does not reduce the need for the other.
+  </p>
+</Callout>
+
+<h3>Deterministic Backstop</h3>
+
+<p>
+  Layer 0 (ArchUnit) is <strong>immune to AI regression</strong>. It requires no AI model, no LLM call, no
+  network access. The rules are deterministic Java code that runs in the test suite. Even if every AI model
+  degrades, hallucinates, or becomes unavailable, L0 continues to enforce architecture constraints.
+</p>
+
+<p>
+  This is the floor, the minimum guarantee. In a world where AI-generated code is the majority of new code,
+  having a deterministic backstop that prevents the most common structural violations is non-negotiable.
+</p>
+
+<ul>
+  <li><strong>10/10 AI generations</strong> violated layer boundaries without ArchUnit rules</li>
+  <li><strong>0/10 AI generations</strong> violated layer boundaries with ArchUnit in the test loop</li>
+  <li>Violations compile successfully, so only a test gate catches them</li>
+</ul>
+
+<h3>Mutation Score Over Coverage</h3>
+
+<p>
+  Line coverage measures which lines <em>executed</em>. Mutation testing measures which lines are
+  actually <em>verified</em>. The difference is critical: a test that runs a function but asserts nothing
+  increases coverage but catches zero bugs.
+</p>
+
+<Callout type="warning" title="The coverage trap">
+  <p>
+    In the PBT case study, traditional tests achieved <strong>90% line coverage</strong> and <strong>70% branch coverage</strong>
+    while missing both computation bugs (early rounding of discount rate, wrong rounding mode on VAT).
+    By every coverage metric, the test suite looked excellent. Mutation testing would have revealed these as
+    survived mutants: change the rounding mode, tests still pass.
+  </p>
+</Callout>
+
+<p>
+  Mutation score is the true metric for test effectiveness:
+</p>
+
+<ul>
+  <li><strong>Killed mutant</strong>: at least one test failed when the code was changed. The test is doing its job.</li>
+  <li><strong>Survived mutant</strong>: no test failed. Either a missing test or a weak assertion.</li>
+  <li><strong>Target</strong>: mutation score &gt;80% for business-critical code, &gt;60% for utilities.</li>
+</ul>
+
+<h3>Test Oracle Reliability Score (TORS)</h3>
+
+<p>
+  TORS measures the reliability of the test suite itself. In environments where 84% of test failures
+  are flaky (Google data), treating every failure as a real regression wastes engineering time and
+  erodes trust in CI.
+</p>
+
+<pre><code>TORS = (real failures) / (total failures)
+If TORS &lt; threshold → test is flagged as unreliable</code></pre>
+
+<p>
+  Unreliable tests are quarantined: they still run, but their results are tracked separately and do not
+  block the pipeline. This prevents the common failure mode where developers stop trusting CI and start
+  merging despite failures.
+</p>
+
+<ul>
+  <li><strong>TORS &gt; 85%</strong>: healthy test suite, failures are real signals</li>
+  <li><strong>TORS 50-85%</strong>: flake remediation needed, prioritize top offenders</li>
+  <li><strong>TORS &lt; 50%</strong>: test suite is a liability, not an asset</li>
+</ul>
+
+<h3>Testing Strategy Selection</h3>
+
+<p>
+  The classic test pyramid is not wrong; it is incomplete. The right testing shape depends on the architecture
+  and risk profile of the system. Visdom Testing supports multiple strategies:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>Shape</th>
+      <th>Best For</th>
+      <th>Emphasis</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Pyramid</strong></td>
+      <td>Many unit, fewer integration, minimal E2E</td>
+      <td>Monoliths, well-bounded domains</td>
+      <td>L0 + L1 heavy, L3 light</td>
+    </tr>
+    <tr>
+      <td><strong>Trophy</strong></td>
+      <td>Integration-heavy (Kent C. Dodds model)</td>
+      <td>Modern frontend, full-stack apps</td>
+      <td>L1 + L2 heavy, static analysis + integration</td>
+    </tr>
+    <tr>
+      <td><strong>Honeycomb</strong></td>
+      <td>Contract-focused (Spotify model)</td>
+      <td>Microservices</td>
+      <td>L3 heavy, L0 for shared conventions</td>
+    </tr>
+    <tr>
+      <td><strong>Diamond</strong></td>
+      <td>Wide integration layer</td>
+      <td>Domain services, data pipelines</td>
+      <td>L1 + L2 heavy, wide property coverage</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Start with the pyramid, adapt to your architecture">
+  <p>
+    If you don't know which strategy fits, start with the pyramid (maximize L0 and L1, add L2 for critical paths,
+    add L3 when you have service boundaries). The dashboard will show where defects escape, telling you which
+    layer needs investment.
+  </p>
+</Callout>
+
+<h2>Visdom SDLC Integration</h2>
+
+<p>
+  Visdom Testing connects to the broader Visdom AI-Native SDLC metrics framework:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>What it measures</th>
+      <th>Visdom Testing's role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>ITS</strong> (Iterations-to-Success)</td>
+      <td>Iterations from task to passing CI</td>
+      <td>Reduces ITS by catching defects earlier (L0 in &lt;10s vs L3 in ~10min). Fast feedback = fewer iterations.</td>
+    </tr>
+    <tr>
+      <td><strong>CPI</strong> (Cost-per-Iteration)</td>
+      <td>Tokens + compute + CI + review per iteration</td>
+      <td>L0 and L1 are near-zero cost. L2 runs only on changed code (incremental). Total testing cost tracked per layer.</td>
+    </tr>
+    <tr>
+      <td><strong>TORS</strong> (Test Oracle Reliability Score)</td>
+      <td>% of test failures that are real regressions</td>
+      <td>Directly measured. Flaky tests quarantined. Prevents the lying oracle problem where agents "fix" tests that aren't broken.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  <a href={`${base}reference/metrics/`}>Full metrics framework &rarr;</a>
+</p>
+
+</DocLayout>

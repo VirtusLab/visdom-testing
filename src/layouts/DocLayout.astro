@@ -1,0 +1,143 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { Breadcrumb } from '@virtuslab/visdom-ui';
+import { DocPageHeader } from '@virtuslab/visdom-ui';
+import { DocPagination } from '@virtuslab/visdom-ui';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  section?: string;
+  tags?: { label: string; variant?: 'green' | 'gray' | 'outline' }[];
+  prev?: { label: string; href: string };
+  next?: { label: string; href: string };
+}
+
+const { title, subtitle, section, tags = [], prev, next } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout title={title}>
+  <main class="max-w-[1200px] mx-auto px-6 py-10">
+    {section && (
+      <div class="mb-4">
+        <Breadcrumb client:load label={`Back to ${section}`} href={`${base}`} />
+      </div>
+    )}
+
+    <DocPageHeader client:load title={title} subtitle={subtitle} tags={tags} />
+
+    <article class="doc-content">
+      <slot />
+    </article>
+
+    {(prev || next) && (
+      <div class="mt-16 border-t border-visdom-gray-200">
+        <DocPagination client:load prev={prev} next={next} />
+      </div>
+    )}
+  </main>
+</BaseLayout>
+
+<style>
+  /* Typography matching landing page */
+  .doc-content :global(h1),
+  .doc-content :global(h2),
+  .doc-content :global(h3),
+  .doc-content :global(h4) {
+    font-family: var(--font-heading, 'Montserrat', sans-serif);
+    font-weight: 700;
+    color: var(--color-visdom-gray-900);
+  }
+
+  .doc-content :global(h2) {
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .doc-content :global(h3) {
+    font-size: 1.15rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .doc-content :global(p) {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-visdom-gray-700);
+    margin-bottom: 1rem;
+  }
+
+  .doc-content :global(a) {
+    color: var(--color-visdom-green-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .doc-content :global(a:hover) {
+    color: var(--color-visdom-green-dark);
+  }
+
+  .doc-content :global(code) {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.875em;
+    background: var(--color-visdom-gray-100);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .doc-content :global(pre) {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.875rem;
+    background: var(--color-visdom-gray-800);
+    color: var(--color-visdom-gray-200);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  .doc-content :global(pre code) {
+    background: none;
+    padding: 0;
+  }
+
+  .doc-content :global(ul),
+  .doc-content :global(ol) {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .doc-content :global(li) {
+    margin-bottom: 0.35rem;
+    line-height: 1.7;
+  }
+
+  .doc-content :global(strong) {
+    font-weight: 600;
+    color: var(--color-visdom-gray-900);
+  }
+
+  .doc-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .doc-content :global(th) {
+    text-align: left;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--color-visdom-gray-200);
+    color: var(--color-visdom-gray-700);
+  }
+  .doc-content :global(td) {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-visdom-gray-100);
+  }
+
+  .doc-content :global(blockquote) {
+    border-left: 3px solid var(--color-visdom-green);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--color-visdom-gray-500);
+    font-style: italic;
+  }
+</style>

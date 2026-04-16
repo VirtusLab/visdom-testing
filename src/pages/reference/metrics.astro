@@ -1,0 +1,720 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+import LayerBadge from '../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<DocLayout
+  title="Metrics Framework"
+  subtitle="Mutation score, TORS, defect escape rate, flake rate: the metrics that actually measure test effectiveness."
+  section="Reference"
+  tags={[
+    { label: "Metrics", variant: "green" },
+    { label: "Framework", variant: "outline" },
+  ]}
+  prev={{ label: "Contract Testing", href: `${base}reference/layers/contract-testing/` }}
+  next={{ label: "Configuration", href: `${base}reference/configuration/` }}
+>
+
+<p>
+  Traditional testing metrics (line coverage, branch coverage, test count) measure effort, not effectiveness.
+  Visdom Testing tracks metrics that answer the question that matters: <strong>would your tests catch a bug
+  if one existed?</strong>
+</p>
+
+<h2>Testing Metrics That Matter</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>What it measures</th>
+      <th>Why it matters</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Mutation score</strong></td>
+      <td>% of code mutations detected by tests</td>
+      <td>The only metric that measures whether tests would actually catch a bug</td>
+    </tr>
+    <tr>
+      <td><strong>TORS</strong></td>
+      <td>% of test failures that are real regressions</td>
+      <td>Measures trust in the test suite. Below 50%, CI is a liability</td>
+    </tr>
+    <tr>
+      <td><strong>Defect escape rate</strong></td>
+      <td>% of bugs that reach production despite testing</td>
+      <td>The ultimate outcome metric. Are the layers working?</td>
+    </tr>
+    <tr>
+      <td><strong>Flake rate</strong></td>
+      <td>% of test runs that fail non-deterministically</td>
+      <td>Flaky tests erode trust and waste CI resources</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Why Coverage Is Insufficient</h2>
+
+<p>
+  Line coverage is the most widely tracked testing metric. It is also the most misleading. Coverage measures
+  which lines <em>executed</em> during testing, not whether the tests would <em>detect a bug</em> on those lines.
+</p>
+
+<Callout type="warning" title="The PBT Case Study">
+  <p>
+    In a controlled experiment with a CRUD invoice service, traditional tests achieved <strong>90% line coverage</strong>
+    and <strong>70% branch coverage</strong> across 10 test methods with 16 assertions. The test suite looked excellent
+    by every standard metric. It caught <strong>0 out of 2</strong> computation bugs.
+  </p>
+  <p>
+    The bugs: early rounding of the discount rate (rounding before multiplication instead of after) and wrong
+    rounding mode on VAT calculation (HALF_UP instead of HALF_EVEN). Both bugs were in covered lines.
+    Both passed all assertions.
+  </p>
+</Callout>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Traditional (10 tests)</th>
+      <th>PBT (8 properties)</th>
+      <th>Combined</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Line coverage</strong></td>
+      <td>90%</td>
+      <td>80%</td>
+      <td>90%</td>
+    </tr>
+    <tr>
+      <td><strong>Branch coverage</strong></td>
+      <td>70%</td>
+      <td>50%</td>
+      <td>70%</td>
+    </tr>
+    <tr>
+      <td><strong>Mutation score (PIT)</strong></td>
+      <td>73%</td>
+      <td>55%</td>
+      <td>73%</td>
+    </tr>
+    <tr>
+      <td><strong>Computation bugs found</strong></td>
+      <td>0/2</td>
+      <td>2/2</td>
+      <td>2/2</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  The critical insight: by every standard metric, the traditional suite looked <em>better</em>. Higher coverage,
+  higher mutation score, more tests. If you relied on metrics alone, you would conclude PBT added no value.
+  Meanwhile, both computation bugs would ship to production.
+  <strong>90% line coverage while missing every computation error that matters.</strong>
+</p>
+
+<h2>Per-Layer Metrics</h2>
+
+<h3>Layer 0: Architecture Testing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Measured when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Rule execution time</td>
+      <td>&lt;10s</td>
+      <td>After L0 completes</td>
+    </tr>
+    <tr>
+      <td>Violation detection rate</td>
+      <td>100% of defined rules</td>
+      <td>Any code change touching constrained packages</td>
+    </tr>
+    <tr>
+      <td>False positive rate</td>
+      <td>0%</td>
+      <td>Rules are deterministic; false positives indicate a rule error</td>
+    </tr>
+    <tr>
+      <td>Rule coverage</td>
+      <td>All critical architecture decisions encoded</td>
+      <td>Architecture review audit</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Layer 1: Property-Based Testing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Measured when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Property execution time</td>
+      <td>~2s per property</td>
+      <td>After L1 completes</td>
+    </tr>
+    <tr>
+      <td>Inputs generated per property</td>
+      <td>&gt;1000</td>
+      <td>Per property run</td>
+    </tr>
+    <tr>
+      <td>Shrinking effectiveness</td>
+      <td>Minimal counterexample found</td>
+      <td>On property failure</td>
+    </tr>
+    <tr>
+      <td>Computation bugs found</td>
+      <td>Tracked per release</td>
+      <td>Bugs found by PBT that other tests missed</td>
+    </tr>
+    <tr>
+      <td>Property coverage</td>
+      <td>&gt;80% of business-critical computations</td>
+      <td>Architecture review</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Layer 2: Mutation Testing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Measured when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mutation score</td>
+      <td>&gt;80% critical, &gt;60% utilities</td>
+      <td>After PIT run completes</td>
+    </tr>
+    <tr>
+      <td>Execution time</td>
+      <td>~5 min (incremental)</td>
+      <td>After L2 completes</td>
+    </tr>
+    <tr>
+      <td>Survived mutants</td>
+      <td>Trending down</td>
+      <td>Per module, per release</td>
+    </tr>
+    <tr>
+      <td>Equivalent mutant rate</td>
+      <td>&lt;10%</td>
+      <td>Manual review of survived mutants</td>
+    </tr>
+    <tr>
+      <td>AI-augmented mutant acceptance</td>
+      <td>&gt;70%</td>
+      <td>LLM-generated mutants that are valid, non-equivalent</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Layer 3: Contract Testing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Measured when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Contract verification time</td>
+      <td>~10 min</td>
+      <td>After L3 completes</td>
+    </tr>
+    <tr>
+      <td>Contract coverage</td>
+      <td>100% of public API endpoints</td>
+      <td>Per service boundary</td>
+    </tr>
+    <tr>
+      <td>Breaking change detection rate</td>
+      <td>100% detected before merge</td>
+      <td>Provider changes that break consumer contracts</td>
+    </tr>
+    <tr>
+      <td>False alarm rate</td>
+      <td>&lt;5%</td>
+      <td>Contract failures that are not real compatibility issues</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Mutation Score Explained</h2>
+
+<p>
+  Mutation testing systematically changes the code (introduces <em>mutants</em>) and checks whether the test
+  suite detects each change. It answers the question: "If the code were wrong, would my tests tell me?"
+</p>
+
+<h3>How PIT Works</h3>
+
+<p>
+  <a href="https://pitest.org">PIT (PITest)</a> is the standard mutation testing tool for the JVM. It:
+</p>
+
+<ol>
+  <li>Analyzes the codebase to identify mutation points (operators, return values, conditionals)</li>
+  <li>Creates mutants: modified versions of the code with one change each</li>
+  <li>Runs the test suite against each mutant</li>
+  <li>Reports which mutants were <strong>killed</strong> (test failed) vs <strong>survived</strong> (all tests passed)</li>
+</ol>
+
+<h3>Mutant Classification</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Meaning</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Killed</strong></td>
+      <td>At least one test failed when the mutant was introduced</td>
+      <td>Good. The test suite detects this kind of bug.</td>
+    </tr>
+    <tr>
+      <td><strong>Survived</strong></td>
+      <td>No test failed. The mutant is indistinguishable from correct code.</td>
+      <td>Write a new test or strengthen an assertion. This is a gap.</td>
+    </tr>
+    <tr>
+      <td><strong>Equivalent</strong></td>
+      <td>The mutant produces identical behavior to the original code</td>
+      <td>No action needed. Exclude from score calculation.</td>
+    </tr>
+    <tr>
+      <td><strong>Timed out</strong></td>
+      <td>The mutant caused an infinite loop or timeout</td>
+      <td>Counted as killed (the mutant was detected via resource limits).</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code>Mutation Score = killed / (killed + survived)
+               = detected mutations / total non-equivalent mutations</code></pre>
+
+<Callout type="info" title="AI-augmented mutation testing">
+  <p>
+    Standard PIT mutators are syntactic (negate conditionals, replace operators). AI-augmented mutant
+    generation creates <em>semantic</em> mutants based on common domain errors: swapping currency codes,
+    using wrong tax rates, reversing sort order. Meta's ACH system reported a <strong>73% acceptance rate</strong>
+    for LLM-generated mutation tests.
+  </p>
+</Callout>
+
+<h2>TORS: Test Oracle Reliability Score</h2>
+
+<p>
+  TORS measures whether your test suite is a reliable signal or a source of noise. In AI-assisted development
+  environments, unreliable tests cause a specific failure mode: AI agents "fix" passing tests that happened
+  to fail due to flakiness, introducing real bugs in the process.
+</p>
+
+<h3>Definition</h3>
+
+<pre><code>TORS = real_failures / total_failures
+
+Where:
+  real_failures  = test failures caused by actual code defects
+  total_failures = all test failures (real + flaky + environment)
+
+Threshold:
+  TORS &gt; 0.85 → test is reliable, include in feedback signal
+  TORS &lt; 0.85 → test is unreliable, quarantine from agent feedback</code></pre>
+
+<h3>TORS Benchmarks</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>TORS Range</th>
+      <th>Assessment</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>&gt;85%</strong></td>
+      <td>Healthy</td>
+      <td>Test failures are real signals. Include in all feedback loops.</td>
+    </tr>
+    <tr>
+      <td><strong>50-85%</strong></td>
+      <td>Degraded</td>
+      <td>Flake remediation needed. Prioritize top offenders. Quarantine worst tests from agent feedback.</td>
+    </tr>
+    <tr>
+      <td><strong>&lt;50%</strong></td>
+      <td>Unreliable</td>
+      <td>Test suite is a liability. Developers and agents cannot trust CI. Mandatory remediation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Defect Escape Rate</h2>
+
+<p>
+  Defect escape rate measures the ultimate outcome: how many bugs reach production despite the testing layers.
+  It is the metric that tells you whether the layers are actually working.
+</p>
+
+<pre><code>Defect Escape Rate = production_bugs / (production_bugs + bugs_caught_in_testing)</code></pre>
+
+<h3>Benchmarks</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rate</th>
+      <th>Assessment</th>
+      <th>Context</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>&lt;1%</strong></td>
+      <td>Exceptional</td>
+      <td>Mature testing with all four layers active. Typical of teams with mutation score &gt;80%.</td>
+    </tr>
+    <tr>
+      <td><strong>1-3%</strong></td>
+      <td>Good</td>
+      <td>Standard for teams with property-based testing and contract testing. Industry competitive.</td>
+    </tr>
+    <tr>
+      <td><strong>3-5%</strong></td>
+      <td>Average</td>
+      <td>Typical for teams relying on unit tests and integration tests only.</td>
+    </tr>
+    <tr>
+      <td><strong>&gt;5%</strong></td>
+      <td>Investigate</td>
+      <td>Testing layers have gaps. Check which defect class is escaping and strengthen the corresponding layer.</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Trace escapes back to layers">
+  <p>
+    When a bug reaches production, classify it: <strong>structural</strong> (L0 should have caught it),
+    <strong>computation</strong> (L1), <strong>weak test</strong> (L2), or <strong>integration</strong> (L3).
+    This tells you exactly which layer needs investment. Over time, the escape pattern reveals your
+    testing strategy's blind spots.
+  </p>
+</Callout>
+
+<h2>Flaky Test Management</h2>
+
+<p>
+  Flaky tests are the single largest source of wasted engineering time in CI. They erode trust,
+  cause false urgency, and in AI-assisted workflows, trigger agents to "fix" code that is not broken.
+</p>
+
+<h3>Industry Data</h3>
+
+<Callout type="reference" title="Google: Flaky Tests at Scale">
+  <p>
+    Google's testing infrastructure data shows that <strong>84% of pass-to-fail test transitions</strong> are
+    caused by flakiness, not real regressions. Google manages flakiness to a <strong>2% budget</strong>: at
+    any given time, no more than 2% of tests may be flaky. Tests exceeding the budget are quarantined automatically.
+  </p>
+</Callout>
+
+<h3>Detection Strategies</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>How it works</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Historical analysis</strong></td>
+      <td>Track pass/fail ratio over last N runs. Flag tests with inconsistent results.</td>
+      <td>Low (metadata only)</td>
+    </tr>
+    <tr>
+      <td><strong>Re-run on failure</strong></td>
+      <td>Re-run failed tests 2-3 times. If any re-run passes, classify as flaky.</td>
+      <td>Medium (extra CI time on failures)</td>
+    </tr>
+    <tr>
+      <td><strong>Quarantine</strong></td>
+      <td>Move known flaky tests to a separate suite. Track but do not block.</td>
+      <td>Low (organizational)</td>
+    </tr>
+    <tr>
+      <td><strong>TORS integration</strong></td>
+      <td>Feed flake data into TORS. Exclude unreliable tests from agent feedback signals.</td>
+      <td>Low (automated)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Flake Budget</h3>
+
+<p>
+  Following Google's model, Visdom Testing recommends a <strong>2% flake budget</strong>:
+</p>
+
+<ul>
+  <li>At any time, no more than 2% of tests may have a TORS below the reliability threshold</li>
+  <li>Tests that breach the budget are automatically quarantined from the agent feedback signal</li>
+  <li>Quarantined tests generate a remediation ticket with flake frequency data</li>
+  <li>Goal is not zero flakes (impossible at scale) but managed flakes that do not erode trust</li>
+</ul>
+
+<h2>Industry Benchmarks</h2>
+
+<p>
+  These benchmarks are drawn from published data by teams operating testing at scale:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Organization</th>
+      <th>Key Finding</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Google</strong></td>
+      <td>84% of CI failures are flaky. 2% flake budget. Historical analysis for detection.</td>
+      <td><a href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html">Google Testing Blog</a></td>
+    </tr>
+    <tr>
+      <td><strong>Meta</strong></td>
+      <td>73% acceptance rate for LLM-generated mutation tests (ACH system). AI augments traditional PIT mutators with semantic mutations.</td>
+      <td><a href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/">Meta Engineering</a></td>
+    </tr>
+    <tr>
+      <td><strong>Atlassian</strong></td>
+      <td>Rovo Dev CLI closed mutation coverage gaps from 56% to 80% on real Jira projects using AI-generated tests.</td>
+      <td><a href="https://www.atlassian.com/blog/developer/automating-mutation-coverage-with-ai">Atlassian Blog</a></td>
+    </tr>
+    <tr>
+      <td><strong>Spotify</strong></td>
+      <td>Honeycomb testing model for microservices. Contract-focused testing reduces integration environment dependency.</td>
+      <td><a href="https://engineering.atspotify.com/2018/01/testing-of-microservices">Spotify Engineering</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>CI Integration Metrics</h2>
+
+<p>
+  Testing effectiveness depends on CI pipeline speed. Slow feedback loops cause developers to context-switch
+  away and merge without waiting for results. Visdom Testing tracks CI-specific metrics to ensure the
+  testing layers provide value within the developer's attention window.
+</p>
+
+<h3>Test Selection</h3>
+
+<p>
+  Not every change requires every test. Test impact analysis determines which tests are affected by a
+  code change and runs only those:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Test selection accuracy</td>
+      <td>&gt;95%</td>
+      <td>Selected tests must include all actually-affected tests</td>
+    </tr>
+    <tr>
+      <td>Test reduction ratio</td>
+      <td>&gt;50%</td>
+      <td>Typical change affects a fraction of the test suite</td>
+    </tr>
+    <tr>
+      <td>Selection overhead</td>
+      <td>&lt;5s</td>
+      <td>Analysis time must be negligible compared to test execution</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Parallelization</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Target</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L0 + L1 total time</td>
+      <td>&lt;30s</td>
+      <td>Fast feedback on structure and computation. Must complete before developer context-switches.</td>
+    </tr>
+    <tr>
+      <td>L2 incremental time</td>
+      <td>&lt;5 min</td>
+      <td>Mutation testing on changed code only. Full run on nightly.</td>
+    </tr>
+    <tr>
+      <td>L3 verification time</td>
+      <td>&lt;10 min</td>
+      <td>Contract verification. Parallelized across consumer-provider pairs.</td>
+    </tr>
+    <tr>
+      <td>Total pipeline time</td>
+      <td>&lt;15 min</td>
+      <td>End-to-end from push to all-green. Beyond 15 min, developers stop waiting.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Feedback Time</h3>
+
+<Callout type="info" title="The 15-minute threshold">
+  <p>
+    Research consistently shows that CI feedback beyond 15 minutes degrades developer productivity.
+    Developers context-switch to other tasks and lose the mental model of their change. Visdom Testing
+    is designed to provide L0 + L1 feedback in under 30 seconds (immediate signal) and full L2 + L3
+    feedback within 15 minutes.
+  </p>
+</Callout>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feedback Stage</th>
+      <th>Time</th>
+      <th>What the developer learns</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Immediate</strong> (L0)</td>
+      <td>&lt;10s</td>
+      <td>Architecture violations, banned APIs, naming issues</td>
+    </tr>
+    <tr>
+      <td><strong>Fast</strong> (L0 + L1)</td>
+      <td>&lt;30s</td>
+      <td>Plus computation correctness from property-based tests</td>
+    </tr>
+    <tr>
+      <td><strong>Standard</strong> (+ L2)</td>
+      <td>&lt;5 min</td>
+      <td>Plus mutation score: are the tests actually verifying the code?</td>
+    </tr>
+    <tr>
+      <td><strong>Complete</strong> (+ L3)</td>
+      <td>&lt;15 min</td>
+      <td>Plus contract verification: will this break other services?</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>End-to-End: Visdom SDLC Metrics Integration</h2>
+
+<Callout type="reference" title="Visdom AI-Native SDLC">
+  <p>
+    These metrics connect Visdom Testing to the broader Visdom AI-Native SDLC framework.
+    ITS, CPI, and TORS are the three core metrics for measuring AI agent effectiveness
+    across the software delivery lifecycle.
+  </p>
+</Callout>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Definition</th>
+      <th>Target</th>
+      <th>Connection to Visdom SDLC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>ITS (Iterations-to-Success)</strong></td>
+      <td>Iterations from task assignment to passing CI</td>
+      <td>1-3 healthy, 5-10 warning, 20+ structural failure</td>
+      <td>Faster feedback (L0 in 10s) reduces iterations. Each layer caught earlier = one fewer iteration.</td>
+    </tr>
+    <tr>
+      <td><strong>CPI (Cost-per-Iteration)</strong></td>
+      <td>Tokens + compute + CI + review per iteration</td>
+      <td>Trending down</td>
+      <td>L0/L1 near-zero cost. Incremental L2 reduces mutation testing cost. Total per-layer cost tracked.</td>
+    </tr>
+    <tr>
+      <td><strong>TORS (Test Oracle Reliability Score)</strong></td>
+      <td>% of test failures that are real regressions</td>
+      <td>&gt;85%</td>
+      <td>Directly measured. Flaky tests quarantined. Prevents agents from "fixing" tests that aren't broken.</td>
+    </tr>
+    <tr>
+      <td><strong>Mutation score</strong></td>
+      <td>% of code mutations detected by tests</td>
+      <td>&gt;80% critical code</td>
+      <td>Leading indicator of defect escape rate. Predicts production bugs before they happen.</td>
+    </tr>
+    <tr>
+      <td><strong>Defect escape rate</strong></td>
+      <td>Bugs reaching production despite testing</td>
+      <td>&lt;1% exceptional, &lt;3% good</td>
+      <td>Primary outcome metric. Traced back to layer gaps for targeted investment.</td>
+    </tr>
+    <tr>
+      <td><strong>Flake rate</strong></td>
+      <td>% of non-deterministic test failures</td>
+      <td>&lt;2% budget</td>
+      <td>Managed, not eliminated. Exceeding budget triggers automatic quarantine.</td>
+    </tr>
+  </tbody>
+</table>
+
+</DocLayout>

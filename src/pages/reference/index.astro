@@ -1,0 +1,108 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import LayerBadge from '../../components/LayerBadge.astro';
+import Callout from '../../components/Callout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Technical Reference"
+  subtitle="Full testing architecture, layer specifications, configuration reference, and metrics framework."
+  section="Home"
+  tags={[{ label: "Reference", variant: "gray" }]}
+  next={{ label: "Architecture", href: `${base}reference/architecture/` }}
+>
+
+<p>
+  This is the technical reference for <strong>Visdom Testing</strong>. It covers the full layered testing
+  architecture, each testing layer in detail, configuration options, metrics framework, and evaluation methodology.
+</p>
+
+<Callout type="tip" title="Looking for the guide?">
+  <p>
+    If you're evaluating Visdom Testing, start with the role-specific guides:
+    <a href={`${base}guide/leaders/`}>For Leaders</a>,
+    <a href={`${base}guide/platform-engineers/`}>For Platform Engineers</a>, or
+    <a href={`${base}guide/developers/`}>For Developers</a>.
+  </p>
+</Callout>
+
+<h2>Architecture</h2>
+
+<div class="space-y-3 mb-8">
+  <a href={`${base}reference/architecture/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">Architecture Overview</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0">Layered testing model, testing strategy selection, design decisions, Visdom SDLC integration.</p>
+  </a>
+</div>
+
+<h2>Layers</h2>
+
+<div class="space-y-3 mb-8">
+  <a href={`${base}reference/layers/architecture-testing/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <div class="flex items-center gap-2 mb-1">
+      <LayerBadge layer={0} />
+      <span class="text-xs text-visdom-gray-400">&lt;10s</span>
+    </div>
+    <p class="text-sm text-visdom-gray-500 !mb-0">ArchUnit rules as executable architecture constraints. Deterministic. Immune to AI regression. 10/10 violations prevented.</p>
+  </a>
+
+  <a href={`${base}reference/layers/property-based-testing/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <div class="flex items-center gap-2 mb-1">
+      <LayerBadge layer={1} />
+      <span class="text-xs text-visdom-gray-400">~2s</span>
+    </div>
+    <p class="text-sm text-visdom-gray-500 !mb-0">jqwik properties with 1000+ inputs per property. Breaks the circular test problem. Finds computation bugs that 90% coverage misses.</p>
+  </a>
+
+  <a href={`${base}reference/layers/mutation-testing/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <div class="flex items-center gap-2 mb-1">
+      <LayerBadge layer={2} />
+      <span class="text-xs text-visdom-gray-400">~5 min</span>
+    </div>
+    <p class="text-sm text-visdom-gray-500 !mb-0">PIT mutation testing + AI-augmented mutant generation. The true measure of test effectiveness. Mutation score over coverage.</p>
+  </a>
+
+  <a href={`${base}reference/layers/contract-testing/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <div class="flex items-center gap-2 mb-1">
+      <LayerBadge layer={3} />
+      <span class="text-xs text-visdom-gray-400">~10 min</span>
+    </div>
+    <p class="text-sm text-visdom-gray-500 !mb-0">Pact consumer-driven contracts. Cross-service verification without full integration environments. API compatibility guaranteed.</p>
+  </a>
+</div>
+
+<h2>Output & Intelligence</h2>
+
+<div class="space-y-3 mb-8">
+  <a href={`${base}reference/dashboard/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">Quality Dashboard</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0">Mutation score trends, flake rate tracking, defect escape rate, per-layer health indicators.</p>
+  </a>
+
+  <a href={`${base}reference/ci-integration/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">CI Integration</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0">GitHub Actions workflow, test selection, parallelization, feedback time optimization.</p>
+  </a>
+</div>
+
+<h2>Configuration & Metrics</h2>
+
+<div class="space-y-3 mb-8">
+  <a href={`${base}reference/configuration/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">Configuration</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0"><code>visdom-testing.yaml</code> reference, layer toggles, thresholds, CI pipeline setup.</p>
+  </a>
+
+  <a href={`${base}reference/metrics/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">Metrics Framework</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0">Mutation score, TORS, defect escape rate, flake rate, per-layer metrics with benchmarks.</p>
+  </a>
+
+  <a href={`${base}reference/evaluation/`} class="block border border-visdom-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow no-underline">
+    <h3 class="!mt-0 !mb-1 text-base">Evaluation Methodology</h3>
+    <p class="text-sm text-visdom-gray-500 !mb-0">How to measure testing effectiveness. Ground truth framework, A/B methodology, industry benchmarks.</p>
+  </a>
+</div>
+
+</DocLayout>

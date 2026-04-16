@@ -1,0 +1,82 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import FaqAccordion from '../components/FaqAccordion.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const trustItems = [
+  {
+    question: "If my coverage is 90%, why do I still have bugs in production?",
+    answer: "Coverage measures which lines executed, not whether your tests would catch a bug on those lines. Mutation testing answers the real question: if the code was wrong, would your tests fail? In our case study, 90% line coverage with 16 hand-written tests missed both computation bugs. The mutation score revealed the gap — survived mutants pointed directly to the untested logic.",
+  },
+  {
+    question: "Isn't property-based testing just fuzzing?",
+    answer: "No. Fuzzing generates random input to find crashes. PBT is fundamentally different: you declare structured properties (rules that must hold for all valid inputs), the framework uses typed generators to produce valid inputs, and when a failure is found, automatic shrinking reduces it to the minimal counterexample. PBT catches logic errors, not just crashes. The counterexample unitPrice=0.01, qty=48, discount=1.05% is meaningful — it points directly to the rounding bug.",
+  },
+  {
+    question: "Will ArchUnit slow down my build?",
+    answer: "No. A focused ArchUnit suite runs in under 10 seconds. The rules analyze bytecode, not source — they are fast. Even with 50+ rules covering layer boundaries, naming conventions, dependency restrictions, and annotation checks, the total execution time stays well under 30 seconds. This is why ArchUnit runs in the pre-push hook as well as CI.",
+  },
+  {
+    question: "Can't AI just write better tests?",
+    answer: "This is the circular problem. AI generates code from the same context it uses to generate tests. The tests encode the same assumptions as the implementation. If the code rounds too early, the AI-generated test expects the too-early-rounded result. You need an independent verification mechanism — properties that declare what must be true regardless of implementation, and mutation testing that measures whether tests actually catch bugs.",
+  },
+];
+
+const integrationItems = [
+  {
+    question: "Do I need to rewrite my existing test suite?",
+    answer: "No. Visdom Testing layers are additive. Your existing unit tests, integration tests, and E2E tests stay exactly as they are. You add ArchUnit rules alongside your existing tests. You add property-based tests for critical computation logic. Mutation testing runs against your existing test suite to measure its effectiveness. Nothing gets replaced.",
+  },
+  {
+    question: "What languages and frameworks are supported?",
+    answer: "Java/Kotlin: ArchUnit + jqwik + PIT (pitest) + Pact JVM. JavaScript/TypeScript: dependency-cruiser + fast-check + Stryker + Pact JS. Python: import-linter + Hypothesis + mutmut + Pact Python. .NET: NetArchTest + FsCheck + Stryker.NET + Pact .NET. The methodology is language-agnostic; the tools vary by ecosystem.",
+  },
+  {
+    question: "How does this fit with my existing CI/CD pipeline?",
+    answer: "Each layer maps to a CI stage. L0 ArchUnit runs in the pre-push hook and early CI (under 10s). L1 PBT runs in the unit test phase (~2s per property). L2 Mutation runs on PR checks against changed files only (~5 min). L3 Contracts run on PR + nightly full verification (~10 min). Fast layers first, expensive layers later. Fail fast.",
+  },
+];
+
+const economicsItems = [
+  {
+    question: "What does mutation testing cost in CI time?",
+    answer: "We use a tiered approach. On PR: run mutation testing only on changed files and their direct dependents (~5 minutes). Nightly: run full module-level mutation analysis. Weekly: run full codebase mutation analysis. This keeps PR feedback fast while maintaining comprehensive mutation score visibility. PIT supports incremental analysis — it only re-mutates changed code.",
+  },
+  {
+    question: "Is this replacing manual testing / QA?",
+    answer: "No. Visdom Testing automates the verification of properties that can be expressed as code: architecture rules, computation invariants, mutation resilience, API contracts. Exploratory testing, usability testing, and domain-specific acceptance testing still need human judgment. The goal is to free QA from catching bugs that machines can catch, so they focus on what humans do best.",
+  },
+];
+
+const methodologyItems = [
+  {
+    question: "PBT failures seem random and flaky — how do I trust them?",
+    answer: "PBT failures are NOT flaky. When a property-based test fails, it has found a real counterexample — a specific input that violates your declared property. The framework then shrinks it to the minimal failing case. If you run it again with the same seed, it reproduces exactly. This is fundamentally different from flaky tests: a flaky test fails intermittently due to timing or state; a PBT failure is a concrete proof that your code is wrong for that input.",
+  },
+  {
+    question: "How do I start with a legacy codebase?",
+    answer: "Start with two things: (1) FreezingArchRule for architecture baseline — this captures your current violations and prevents new ones. As you fix existing violations, the frozen baseline shrinks. (2) Focus PBT on critical calculations — pricing, billing, permissions, financial formulas. These are where computation bugs cause the most damage and where PBT finds the most bugs. Don't try to add properties to everything at once.",
+  },
+];
+---
+<DocLayout
+  title="FAQ"
+  subtitle="Common questions about Visdom Testing, property-based testing, mutation testing, and CI integration."
+  section="Home"
+  tags={[{ label: "FAQ", variant: "outline" }]}
+>
+
+<h2>Trust & Effectiveness</h2>
+<FaqAccordion items={trustItems} />
+
+<h2>Integration</h2>
+<FaqAccordion items={integrationItems} />
+
+<h2>Economics</h2>
+<FaqAccordion items={economicsItems} />
+
+<h2>Methodology</h2>
+<FaqAccordion items={methodologyItems} />
+
+</DocLayout>

@@ -1,0 +1,116 @@
+---
+const base = import.meta.env.BASE_URL;
+
+const layers = [
+  {
+    id: 'L0',
+    name: 'Layer 0',
+    label: 'Architecture Guardrails',
+    timing: '<10s',
+    description: 'ArchUnit rules that prevent AI from introducing structural violations.',
+    bg: 'bg-gray-50',
+    border: 'border-gray-400',
+    dot: 'bg-gray-400',
+    pill: 'bg-gray-100 text-gray-600',
+    href: `${base}reference/layers/architecture-testing/`,
+  },
+  {
+    id: 'L1',
+    name: 'Layer 1',
+    label: 'Property-Based Verification',
+    timing: '~2s',
+    description: 'Stochastic testing with jqwik. Thousands of inputs per property, automatic shrinking.',
+    bg: 'bg-blue-50',
+    border: 'border-blue-400',
+    dot: 'bg-blue-400',
+    pill: 'bg-blue-100 text-blue-600',
+    href: `${base}reference/layers/property-based-testing/`,
+  },
+  {
+    id: 'L2',
+    name: 'Layer 2',
+    label: 'Mutation-Guided Quality',
+    timing: '~5 min',
+    description: 'PIT + AI augmentation. Measures real test effectiveness, not just coverage.',
+    bg: 'bg-amber-50',
+    border: 'border-amber-400',
+    dot: 'bg-amber-400',
+    pill: 'bg-amber-100 text-amber-600',
+    href: `${base}reference/layers/mutation-testing/`,
+  },
+  {
+    id: 'L3',
+    name: 'Layer 3',
+    label: 'Contract & Integration',
+    timing: '~10 min',
+    description: 'Pact contracts and integration tests verify cross-service correctness.',
+    bg: 'bg-purple-50',
+    border: 'border-purple-400',
+    dot: 'bg-purple-400',
+    pill: 'bg-purple-100 text-purple-600',
+    href: `${base}reference/layers/contract-testing/`,
+  },
+];
+---
+
+<div class="flex flex-col items-center w-full max-w-lg mx-auto">
+  {layers.map((layer, i) => (
+    <>
+      {/* Layer box */}
+      <a
+        href={layer.href}
+        class={`block w-full rounded-lg p-4 border-l-4 ${layer.border} ${layer.bg} no-underline hover:shadow-md transition-shadow`}
+      >
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class={`inline-block w-2.5 h-2.5 rounded-full ${layer.dot}`}></span>
+            <span class="text-xs font-medium text-gray-500">{layer.name}</span>
+            <span class="font-bold text-gray-900 text-sm">{layer.label}</span>
+          </div>
+          <span class={`text-xs font-medium px-2 py-0.5 rounded-full ${layer.pill}`}>
+            {layer.timing}
+          </span>
+        </div>
+        <p class="text-sm text-gray-500 !mb-0 ml-[1.125rem]">{layer.description}</p>
+      </a>
+
+      {/* Connector arrow */}
+      {i < layers.length - 1 && (
+        <div class="flex flex-col items-center py-1">
+          <div class="w-px h-4 bg-gray-300"></div>
+          {/* Label between L1 and L2 */}
+          {i === 1 && (
+            <span class="inline-block text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full my-1">
+              critical paths only
+            </span>
+          )}
+          <svg class="w-3 h-3 text-gray-400" viewBox="0 0 12 12" fill="currentColor">
+            <path d="M6 9L2 5h8L6 9z" />
+          </svg>
+        </div>
+      )}
+    </>
+  ))}
+
+  {/* Final connector to Dashboard */}
+  <div class="flex flex-col items-center py-1">
+    <div class="w-px h-4 bg-gray-300"></div>
+    <svg class="w-3 h-3 text-gray-400" viewBox="0 0 12 12" fill="currentColor">
+      <path d="M6 9L2 5h8L6 9z" />
+    </svg>
+  </div>
+
+  {/* Dashboard box */}
+  <a
+    href={`${base}reference/metrics/`}
+    class="block w-full rounded-lg p-4 border-l-4 border-emerald-400 bg-emerald-50 no-underline hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-center gap-2 mb-1">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+      <span class="font-bold text-gray-900 text-sm">Quality Dashboard</span>
+    </div>
+    <p class="text-sm text-gray-500 !mb-0 ml-[1.125rem]">
+      Aggregated metrics, mutation scores, quality gates, and trend analysis.
+    </p>
+  </a>
+</div>

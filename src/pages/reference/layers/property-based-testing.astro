@@ -1,0 +1,380 @@
+---
+import DocLayout from '../../../layouts/DocLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import LayerBadge from '../../../components/LayerBadge.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="Layer 1: Property-Based Testing"
+  subtitle="Stochastic testing for stochastic code. Catches computation bugs that example-based tests miss."
+  section="Reference"
+  tags={[
+    { label: "Layer 1", variant: "green" },
+    { label: "jqwik", variant: "outline" }
+  ]}
+  prev={{ label: "Layer 0: Architecture Testing", href: `${base}reference/layers/architecture-testing/` }}
+  next={{ label: "Layer 2: Mutation-Guided Quality", href: `${base}reference/layers/mutation-testing/` }}
+>
+
+<h2>The mismatch</h2>
+
+<p>
+  Traditional tests are specific input-output pairs written by humans for human-written code. A developer
+  thinks of edge cases based on their understanding of the implementation. They pick 5, maybe 10 examples,
+  and assert expected outputs.
+</p>
+
+<p>
+  AI-generated code is stochastic. The same prompt produces different implementations across runs. The code
+  may handle the 10 hand-picked examples perfectly while silently mishandling the millions of inputs nobody
+  thought to test. Testing stochastic code with fixed, hand-picked examples is a fundamental mismatch.
+</p>
+
+<p>
+  Property-based testing closes this gap. Instead of specifying individual examples, you declare
+  <strong>properties</strong> — rules that must hold for <em>all</em> valid inputs — and the framework
+  generates hundreds or thousands of test cases automatically.
+</p>
+
+<h2>What is property-based testing?</h2>
+
+<p>
+  In property-based testing, you declare invariants about your code's behavior, and the framework generates
+  random valid inputs to verify those invariants. If any generated input violates a property, the framework
+  reports the counterexample.
+</p>
+
+<p>Consider a pricing module that calculates order totals with discounts and VAT:</p>
+
+<pre><code>@Property
+void totalShouldNeverBeNegative(
+    @ForAll @DoubleRange(min = 0.01, max = 10_000) double unitPrice,
+    @ForAll @IntRange(min = 1, max = 1000) int quantity,
+    @ForAll @DoubleRange(min = 0, max = 0.5) double discountRate,
+    @ForAll @DoubleRange(min = 0, max = 0.3) double vatRate
+) {'{'}
+    Money total = pricingService.calculateTotal(unitPrice, quantity, discountRate, vatRate);
+    assertThat(total.amount()).isGreaterThanOrEqualTo(BigDecimal.ZERO);
+{'}'}</code></pre>
+
+<p>
+  This single property tests the pricing function with 1,000 randomly generated combinations of prices,
+  quantities, discounts, and VAT rates. It catches edge cases no human would think to write: extreme
+  discount-price-quantity interactions, floating-point rounding surprises, boundary overflows.
+</p>
+
+<h2>Three core patterns</h2>
+
+<h3>Invariant properties</h3>
+<p>
+  A condition that must hold for all valid inputs, regardless of the specific values. The simplest and
+  most common pattern.
+</p>
+
+<pre><code>@Property
+void totalShouldNeverBeNegative(...) {'{'}
+    Money total = pricingService.calculateTotal(unitPrice, quantity, discountRate, vatRate);
+    assertThat(total.amount()).isGreaterThanOrEqualTo(BigDecimal.ZERO);
+{'}'}
+
+@Property
+void discountShouldNeverExceedSubtotal(...) {'{'}
+    PriceBreakdown breakdown = pricingService.breakdown(unitPrice, quantity, discountRate);
+    assertThat(breakdown.discount()).isLessThanOrEqualTo(breakdown.subtotal());
+{'}'}</code></pre>
+
+<h3>Oracle properties</h3>
+<p>
+  Compare the system under test to a known-correct reference implementation. The most powerful pattern
+  for catching computation bugs.
+</p>
+
+<pre><code>@Property
+void totalShouldMatchReferenceCalculation(...) {'{'}
+    Money actual = pricingService.calculateTotal(unitPrice, quantity, discountRate, vatRate);
+
+    // Reference: step-by-step calculation with explicit rounding
+    BigDecimal subtotal = BigDecimal.valueOf(unitPrice)
+        .multiply(BigDecimal.valueOf(quantity));
+    BigDecimal discount = subtotal.multiply(BigDecimal.valueOf(discountRate))
+        .setScale(2, RoundingMode.HALF_UP);
+    BigDecimal afterDiscount = subtotal.subtract(discount);
+    BigDecimal vat = afterDiscount.multiply(BigDecimal.valueOf(vatRate))
+        .setScale(2, RoundingMode.HALF_UP);
+    BigDecimal expected = afterDiscount.add(vat);
+
+    assertThat(actual.amount()).isEqualByComparingTo(expected);
+{'}'}</code></pre>
+
+<h3>Round-trip properties</h3>
+<p>
+  Apply an operation and its inverse, verifying that you get back the original value. Ideal for
+  serialization, encoding, and data transformation.
+</p>
+
+<pre><code>@Property
+void serializeDeserializeRoundTrip(
+    @ForAll("validOrders") Order original
+) {'{'}
+    String json = serializer.toJson(original);
+    Order restored = serializer.fromJson(json, Order.class);
+    assertThat(restored).isEqualTo(original);
+{'}'}</code></pre>
+
+<h2>Shrinking</h2>
+
+<p>
+  When a property fails, the generated input is often large and complex: a list of 47 items, a string
+  of 200 characters, a deeply nested object. <strong>Shrinking</strong> is the process by which the
+  framework automatically reduces the failing input to the smallest counterexample that still triggers
+  the failure.
+</p>
+
+<p>
+  Instead of reporting "fails for quantity=847, unitPrice=3291.44, discountRate=0.4731," the framework
+  shrinks to "fails for quantity=1, unitPrice=0.01, discountRate=0.005" — the minimal reproduction case
+  that pinpoints exactly where the logic breaks.
+</p>
+
+<h2>Case Study 1: Pricing Module</h2>
+
+<p>
+  We gave an AI agent a pricing module specification and asked it to implement the module and write tests.
+  Then we applied property-based testing to the same module.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>AI-generated example tests</th>
+      <th>Property-based tests</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Number of tests</td>
+      <td>10 example-based</td>
+      <td>8 properties</td>
+    </tr>
+    <tr>
+      <td>Line coverage</td>
+      <td>90%</td>
+      <td>80%</td>
+    </tr>
+    <tr>
+      <td>Bug 1: early rounding of discount rate</td>
+      <td>Not detected</td>
+      <td><strong>Detected</strong></td>
+    </tr>
+    <tr>
+      <td>Bug 2: wrong rounding mode on VAT</td>
+      <td>Not detected</td>
+      <td><strong>Detected</strong></td>
+    </tr>
+    <tr>
+      <td>Bugs found</td>
+      <td>0/2</td>
+      <td><strong>2/2</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="warning" title="Coverage is not correctness">
+  <p>
+    The AI-generated test suite achieved <strong>90% line coverage</strong> while missing every computation
+    error that matters. High coverage creates false confidence. Property-based tests at 80% coverage
+    found both bugs because they tested the <em>correctness of the computation</em>, not just which
+    lines executed.
+  </p>
+</Callout>
+
+<p>
+  <strong>Bug 1</strong> was an early rounding error: the discount rate was rounded to 2 decimal places
+  before being applied to the subtotal, losing precision on large orders. The AI-written examples used
+  clean discount rates (10%, 20%, 50%) that masked the issue.
+</p>
+
+<p>
+  <strong>Bug 2</strong> was a wrong rounding mode: VAT calculation used <code>RoundingMode.FLOOR</code>
+  instead of <code>RoundingMode.HALF_UP</code>, producing amounts that were consistently 1 cent too low
+  on certain inputs. The hand-picked examples happened to produce values where both modes agreed.
+</p>
+
+<h2>Case Study 2: Promotion Engine</h2>
+
+<p>
+  A more complex module: a promotion engine with stacking rules, minimum order thresholds, and
+  category-specific discounts. The pattern repeated at a wider gap.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>AI-generated example tests</th>
+      <th>Property-based tests</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Number of tests</td>
+      <td>16 example-based</td>
+      <td>8 properties</td>
+    </tr>
+    <tr>
+      <td>Line coverage</td>
+      <td>100%</td>
+      <td>85%</td>
+    </tr>
+    <tr>
+      <td>Interaction bugs found</td>
+      <td>0/3</td>
+      <td><strong>3/3</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  All three bugs were interaction effects: promotions combining in ways that violated business rules.
+  The example tests tested each promotion in isolation. The property-based tests generated random
+  combinations and found the interactions that broke invariants.
+</p>
+
+<h2>Not all properties are equal</h2>
+
+<p>
+  In the pricing case study, we wrote 8 properties total. Of those, 6 were <strong>structural
+  properties</strong> (non-negative total, discount not exceeding subtotal, VAT non-negative) and 2
+  were <strong>oracle properties</strong> (total matches reference calculation).
+</p>
+
+<p>
+  All 6 structural properties passed on the buggy code. Only the 2 oracle properties caught both bugs.
+</p>
+
+<p>
+  Structural properties verify shape ("is this value in the right range?"). Oracle properties verify
+  correctness ("is this the right value?"). Both matter, but for critical business logic, you need
+  oracle properties.
+</p>
+
+<Callout type="tip" title="Key takeaway">
+  <p>
+    Write at least one oracle property per critical formula. An oracle can be a simplified reference
+    implementation, a lookup table for known values, or a mathematical identity that the result must satisfy.
+  </p>
+</Callout>
+
+<h2>Where PBT adds most value</h2>
+
+<h3>High-value targets</h3>
+<ul>
+  <li><strong>Pure functions</strong> — pricing calculations, tax engines, financial computations</li>
+  <li><strong>Rule engines</strong> — promotion stacking, eligibility checks, validation rules</li>
+  <li><strong>Serialization / parsing</strong> — JSON, XML, protocol buffers, CSV round-trips</li>
+  <li><strong>Data transformations</strong> — mapping, aggregation, filtering pipelines</li>
+  <li><strong>Cryptographic / hashing</strong> — encoding round-trips, hash distribution</li>
+</ul>
+
+<h3>Low-value targets</h3>
+<ul>
+  <li><strong>Integration tests</strong> — external service calls, database interactions (too slow)</li>
+  <li><strong>Simple CRUD</strong> — trivial mapping with no computation</li>
+  <li><strong>UI rendering</strong> — hard to express meaningful properties</li>
+  <li><strong>Configuration loading</strong> — typically tested once with a known file</li>
+</ul>
+
+<h2>CI integration</h2>
+
+<p>
+  Property-based tests are parameterized by the number of tries. More tries means more input coverage
+  but longer execution. Use a tiered approach:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Stage</th>
+      <th>Tries</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Pre-commit / local</td>
+      <td>100</td>
+      <td>Fast feedback during development</td>
+    </tr>
+    <tr>
+      <td>CI (pull request)</td>
+      <td>1,000</td>
+      <td>Thorough validation before merge</td>
+    </tr>
+    <tr>
+      <td>Nightly</td>
+      <td>10,000</td>
+      <td>Deep exploration for rare edge cases</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="info" title="PBT failures are NOT flaky tests">
+  <p>
+    When a property-based test fails, it found a real bug. The input is random, but the failure is
+    deterministic — you can replay the exact seed. If a PBT test fails in CI, do not re-run it hoping
+    it passes. Investigate the counterexample.
+  </p>
+</Callout>
+
+<h2>Framework landscape</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Framework</th>
+      <th>Language</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>QuickCheck</strong></td>
+      <td>Haskell</td>
+      <td>The original. Invented property-based testing in 1999.</td>
+    </tr>
+    <tr>
+      <td><strong>Hypothesis</strong></td>
+      <td>Python</td>
+      <td>Best-in-class shrinking, extensive type strategy library.</td>
+    </tr>
+    <tr>
+      <td><strong>jqwik</strong></td>
+      <td>Java</td>
+      <td>JUnit 5 integration, excellent arbitrary generators, recommended for JVM.</td>
+    </tr>
+    <tr>
+      <td><strong>fast-check</strong></td>
+      <td>JavaScript / TypeScript</td>
+      <td>Feature-rich, supports async properties, good shrinking.</td>
+    </tr>
+    <tr>
+      <td><strong>Hedgehog</strong></td>
+      <td>Haskell / Scala / F#</td>
+      <td>Integrated shrinking — generators and shrinkers defined together.</td>
+    </tr>
+    <tr>
+      <td><strong>PropEr</strong></td>
+      <td>Erlang</td>
+      <td>QuickCheck-inspired, stateful testing support.</td>
+    </tr>
+    <tr>
+      <td><strong>Rapid</strong></td>
+      <td>Go</td>
+      <td>Lightweight, integrates with Go's testing package.</td>
+    </tr>
+  </tbody>
+</table>
+
+</DocLayout>

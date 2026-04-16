@@ -1,0 +1,30 @@
+---
+import { Timeline as TimelineReact } from '@virtuslab/visdom-ui';
+
+const steps = [
+  {
+    number: 1,
+    title: 'Assessment',
+    duration: '2-3 weeks',
+    description: 'Analyze current test suite, CI reliability, coverage quality, flaky test density',
+  },
+  {
+    number: 2,
+    title: 'Pilot',
+    duration: '4-6 weeks',
+    description: 'Deploy ArchUnit + PBT on 1-2 modules, establish mutation score baseline',
+  },
+  {
+    number: 3,
+    title: 'Scale',
+    duration: '4-8 weeks',
+    description: 'Roll out across teams, integrate contract testing, tune quality gates',
+  },
+  {
+    number: 4,
+    title: 'Handover',
+    description: 'Your team owns it. Dashboard, metrics, and knowledge transfer complete.',
+  },
+];
+---
+<TimelineReact steps={steps} />

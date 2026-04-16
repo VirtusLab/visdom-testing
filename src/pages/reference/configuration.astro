@@ -1,0 +1,455 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const ghActionsYaml = `# .github/workflows/visdom-testing.yml
+name: Visdom Testing
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'  # nightly at 2 AM
+
+jobs:
+  architecture-and-properties:
+    name: L0 Architecture + L1 PBT
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Run ArchUnit + PBT tests
+        run: mvn test -pl :architecture-tests,:property-tests -q
+
+  mutation:
+    name: L2 Mutation (changed files)
+    needs: architecture-and-properties
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Run PIT on changed modules
+        run: |
+          CHANGED=\\$(git diff --name-only origin/main...HEAD -- '*.java' | \\\\
+            sed 's|src/main/java/||;s|/[^/]*\\$||;s|/|.|g' | sort -u)
+          mvn org.pitest:pitest-maven:mutationCoverage \\\\
+            -DtargetClasses="\\$\\{CHANGED\\}" \\\\
+            -DmutationThreshold=60
+
+  contracts:
+    name: L3 Contract Verification
+    needs: architecture-and-properties
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Verify provider contracts
+        run: mvn test -pl :contract-tests -q
+        env:
+          PACT_BROKER_URL: \\$\\{\\{ secrets.PACT_BROKER_URL \\}\\}
+
+  mutation-nightly:
+    name: L2 Mutation (full modules)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Run full mutation analysis
+        run: mvn org.pitest:pitest-maven:mutationCoverage`;
+
+const gitlabCiYaml = `# .gitlab-ci.yml
+stages:
+  - fast-checks
+  - pr-checks
+  - nightly
+
+archunit-pbt:
+  stage: fast-checks
+  script:
+    - mvn test -pl :architecture-tests,:property-tests -q
+  rules:
+    - if: \\$CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: \\$CI_PIPELINE_SOURCE == "schedule"
+
+mutation-pr:
+  stage: pr-checks
+  script:
+    - >
+      CHANGED=\\$(git diff --name-only \\$CI_MERGE_REQUEST_DIFF_BASE_SHA...HEAD -- '*.java' |
+      sed 's|src/main/java/||;s|/[^/]*\\$||;s|/|.|g' | sort -u)
+    - mvn org.pitest:pitest-maven:mutationCoverage
+      -DtargetClasses="\\$\\{CHANGED\\}"
+      -DmutationThreshold=60
+  rules:
+    - if: \\$CI_PIPELINE_SOURCE == "merge_request_event"
+
+contracts:
+  stage: pr-checks
+  script:
+    - mvn test -pl :contract-tests -q
+  rules:
+    - if: \\$CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: \\$CI_PIPELINE_SOURCE == "schedule"
+
+mutation-full:
+  stage: nightly
+  script:
+    - mvn org.pitest:pitest-maven:mutationCoverage
+  rules:
+    - if: \\$CI_PIPELINE_SOURCE == "schedule"`;
+
+const providerVerification = `@Provider("pricing-service")
+@PactBroker(
+    url = "\\$\\{pact.broker.url\\}",
+    consumerVersionSelectors = {
+        @ConsumerVersionSelector(tag = "main"),
+        @ConsumerVersionSelector(deployed = true)
+    }
+)
+class PricingProviderTest {
+    // Provider state setup and verification
+}`;
+---
+<DocLayout
+  title="Configuration"
+  subtitle="visdom-testing.yaml reference, CI integration, and tool configuration."
+  section="Reference"
+  tags={[{ label: "Reference", variant: "gray" }, { label: "Configuration", variant: "outline" }]}
+  prev={{ label: "Metrics Framework", href: `${base}reference/metrics/` }}
+>
+
+<h2>Configuration file</h2>
+
+<p>
+  All Visdom Testing settings live in a single <code>visdom-testing.yaml</code> file at the project root.
+  Each layer can be enabled or disabled independently, and thresholds are configurable per layer.
+</p>
+
+<pre><code># visdom-testing.yaml
+version: "1.0"
+
+layers:
+  architecture:
+    enabled: true
+    fail-on-violation: true
+    baseline: archunit_store/   # FreezingArchRule baseline directory
+
+  property-based:
+    enabled: true
+    default-tries: 1000         # tries per property (override per-test)
+    seed: fixed                 # "fixed" for reproducibility, "random" for exploration
+    timeout-per-property: 10s
+
+  mutation:
+    enabled: true
+    target-classes:
+      - "com.example.pricing.*"
+      - "com.example.billing.*"
+    excluded-classes:
+      - "com.example.*.config.*"
+      - "com.example.*.dto.*"
+    mutators:
+      - DEFAULTS                # PIT default mutator group
+      - EXTENDED                # additional mutators for thorough analysis
+    threshold:
+      minimum-score: 60         # percentage, PR gate
+      warn-score: 75            # percentage, warning level
+
+  contracts:
+    enabled: true
+    broker-url: "https://pact-broker.example.com"
+    publish-results: true
+    provider-version-from: git-commit
+    consumer-version-selectors:
+      - tag: main
+      - deployed: true
+
+quality-gates:
+  mutation-score: 60            # minimum mutation score for changed files
+  architecture-compliance: true # zero ArchUnit violations
+  contract-verification: true   # all contracts must pass
+  max-flakiness: 2              # percentage, per-run flakiness budget
+
+ci:
+  pr-scope: changed-files       # "changed-files" or "changed-modules"
+  nightly-scope: full-modules
+  parallel: true
+  timeout: 30m
+</code></pre>
+
+<h2>Layer 0: ArchUnit</h2>
+
+<h3>Test placement</h3>
+<p>
+  Place your architecture tests in a dedicated test class, typically at
+  <code>src/test/java/com/example/architecture/ArchitectureTest.java</code>.
+  Use the <code>@AnalyzeClasses</code> annotation to scope the analysis.
+</p>
+
+<pre><code>@AnalyzeClasses(packages = "com.example", importOptions = {'{'}
+    ImportOption.DoNotIncludeTests.class
+{'}'})
+class ArchitectureTest {'{'}
+
+    @ArchTest
+    static final ArchRule controllers_should_not_access_repositories =
+        noClasses()
+            .that().resideInAPackage("..controller..")
+            .should().accessClassesThat()
+            .resideInAPackage("..repository..");
+
+    @ArchTest
+    static final ArchRule no_field_injection =
+        noFields()
+            .should().beAnnotatedWith("org.springframework.beans.factory.annotation.Autowired");
+
+    @ArchTest
+    static final ArchRule no_generic_exceptions =
+        noClasses()
+            .should().callMethodWhere(
+                JavaCall.Predicates.target(HasName.Predicates.name("throw"))
+            );
+{'}'}</code></pre>
+
+<h3>FreezingArchRule for baselines</h3>
+<p>
+  When adopting ArchUnit on a legacy codebase, use <code>FreezingArchRule</code> to capture existing
+  violations as a baseline. New violations fail the build; existing ones are tracked and reduced over time.
+</p>
+
+<pre><code>@ArchTest
+static final ArchRule no_rest_template = FreezingArchRule.freeze(
+    noClasses()
+        .should().accessClassesThat()
+        .haveFullyQualifiedName("org.springframework.web.client.RestTemplate")
+);</code></pre>
+
+<p>
+  The baseline is stored in <code>archunit_store/</code> by default. Commit this directory to version
+  control so the baseline is shared across the team.
+</p>
+
+<h3>Pre-push hook setup</h3>
+<pre><code># .git/hooks/pre-push
+#!/bin/sh
+echo "Running ArchUnit tests..."
+mvn test -pl :architecture-tests -Dtest=ArchitectureTest -q
+if [ $? -ne 0 ]; then
+    echo "ArchUnit violations detected. Push rejected."
+    exit 1
+fi</code></pre>
+
+<h2>Layer 1: Property-Based Testing (jqwik)</h2>
+
+<h3>jqwik configuration</h3>
+<p>
+  jqwik runs as a JUnit 5 test engine. Add the dependency and configure via
+  <code>jqwik.properties</code> or annotations.
+</p>
+
+<pre><code># src/test/resources/jqwik.properties
+jqwik.tries.default=1000
+jqwik.maxDiscardRatio=5
+jqwik.reporting.onlyFailures=true
+jqwik.database=.jqwik-database</code></pre>
+
+<h3>Tries per property</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Context</th>
+      <th>Tries</th>
+      <th>Use case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Development</td>
+      <td>100</td>
+      <td>Fast feedback during TDD loop</td>
+    </tr>
+    <tr>
+      <td>CI (per PR)</td>
+      <td>1,000</td>
+      <td>Standard verification on each push</td>
+    </tr>
+    <tr>
+      <td>Nightly / release</td>
+      <td>10,000</td>
+      <td>Thorough exploration for rare edge cases</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Seed management</h3>
+<p>
+  jqwik records failing seeds in <code>.jqwik-database</code>. When a property fails, jqwik
+  replays the failing seed on subsequent runs to ensure the bug stays caught until fixed.
+  Commit <code>.jqwik-database</code> or set a fixed seed in CI for reproducibility.
+</p>
+
+<h2>Layer 2: Mutation Testing (PIT)</h2>
+
+<h3>PIT configuration</h3>
+<pre><code>&lt;!-- pom.xml --&gt;
+&lt;plugin&gt;
+  &lt;groupId&gt;org.pitest&lt;/groupId&gt;
+  &lt;artifactId&gt;pitest-maven&lt;/artifactId&gt;
+  &lt;version&gt;1.17.1&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;targetClasses&gt;
+      &lt;param&gt;com.example.pricing.*&lt;/param&gt;
+      &lt;param&gt;com.example.billing.*&lt;/param&gt;
+    &lt;/targetClasses&gt;
+    &lt;excludedClasses&gt;
+      &lt;param&gt;com.example.*.config.*&lt;/param&gt;
+      &lt;param&gt;com.example.*.dto.*&lt;/param&gt;
+    &lt;/excludedClasses&gt;
+    &lt;mutators&gt;
+      &lt;mutator&gt;DEFAULTS&lt;/mutator&gt;
+    &lt;/mutators&gt;
+    &lt;timestampedReports&gt;false&lt;/timestampedReports&gt;
+    &lt;outputFormats&gt;
+      &lt;param&gt;HTML&lt;/param&gt;
+      &lt;param&gt;XML&lt;/param&gt;
+    &lt;/outputFormats&gt;
+    &lt;mutationThreshold&gt;60&lt;/mutationThreshold&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
+
+<h3>Target classes</h3>
+<p>
+  Focus mutation testing on business logic, not infrastructure. Exclude DTOs, configuration classes,
+  and generated code. Mutating these adds CI time without finding real bugs.
+</p>
+
+<h3>Mutator selection</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Mutator group</th>
+      <th>What it does</th>
+      <th>When to use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>DEFAULTS</code></td>
+      <td>Conditionals, math, return values</td>
+      <td>Always &mdash; baseline mutators</td>
+    </tr>
+    <tr>
+      <td><code>EXTENDED</code></td>
+      <td>Adds constructor calls, inline constants, remove conditionals</td>
+      <td>Nightly runs for deeper analysis</td>
+    </tr>
+    <tr>
+      <td><code>ALL</code></td>
+      <td>Every available mutator</td>
+      <td>Release gate / audit only</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Thresholds</h3>
+<p>
+  Set <code>mutationThreshold</code> to your minimum acceptable score. Start at 60% and raise it
+  as your test suite improves. A score below 60% typically indicates significant gaps in test
+  effectiveness.
+</p>
+
+<h2>Layer 3: Contract Testing (Pact)</h2>
+
+<h3>Pact Broker configuration</h3>
+<pre><code># visdom-testing.yaml (contracts section)
+contracts:
+  broker-url: "https://pact-broker.example.com"
+  publish-results: true
+  provider-version-from: git-commit
+  consumer-version-selectors:
+    - tag: main           # verify against main branch consumers
+    - deployed: true      # verify against currently deployed consumers</code></pre>
+
+<h3>Provider verification</h3>
+<pre><code set:html={providerVerification} /></pre>
+
+<h3>Contract versioning</h3>
+<p>
+  Use git commit SHA as the provider version. This ensures each build is uniquely identified
+  and the Pact Broker can track which versions are compatible. Tag versions with the branch name
+  for consumer version selection.
+</p>
+
+<h2>CI Integration</h2>
+
+<h3>GitHub Actions workflow</h3>
+<pre><code set:html={ghActionsYaml} /></pre>
+
+<h3>GitLab CI example</h3>
+<pre><code set:html={gitlabCiYaml} /></pre>
+
+<h2>Quality gates</h2>
+
+<p>
+  Quality gates are configured in the <code>quality-gates</code> section of
+  <code>visdom-testing.yaml</code> and enforced in CI.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gate</th>
+      <th>Condition</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Mutation score</strong></td>
+      <td>Changed files must meet minimum mutation score</td>
+      <td>60%</td>
+    </tr>
+    <tr>
+      <td><strong>Architecture compliance</strong></td>
+      <td>Zero ArchUnit violations</td>
+      <td>Enabled</td>
+    </tr>
+    <tr>
+      <td><strong>Contract verification</strong></td>
+      <td>All consumer-driven contracts pass</td>
+      <td>Enabled</td>
+    </tr>
+    <tr>
+      <td><strong>Flakiness budget</strong></td>
+      <td>Per-run flakiness below threshold</td>
+      <td>2%</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Start with warnings, then enforce">
+  <p>
+    When first deploying, set quality gates to warn-only mode. Teams see the metrics without being
+    blocked. After 2-4 weeks, once baselines are established and teams understand the metrics,
+    switch to enforcement mode.
+  </p>
+</Callout>
+
+</DocLayout>

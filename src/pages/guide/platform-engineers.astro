@@ -1,0 +1,223 @@
+---
+import DocLayout from '../../layouts/DocLayout.astro';
+import Callout from '../../components/Callout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+<DocLayout
+  title="For Platform Engineers"
+  subtitle="How to integrate Visdom Testing into your CI/CD pipeline and developer workflow."
+  section="Home"
+  tags={[{ label: "Guide", variant: "green" }, { label: "Platform", variant: "outline" }]}
+  prev={{ label: "For Leaders", href: `${base}guide/leaders/` }}
+  next={{ label: "For Developers", href: `${base}guide/developers/` }}
+>
+
+<h2>CI integration</h2>
+
+<p>
+  Each testing layer runs at a different point in the pipeline. The goal is fast feedback:
+  cheap checks first, expensive checks later.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Where it runs</th>
+      <th>Time</th>
+      <th>Trigger</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>L0 ArchUnit</strong></td>
+      <td>Pre-push hook + CI</td>
+      <td>&lt;10s</td>
+      <td>Every commit</td>
+    </tr>
+    <tr>
+      <td><strong>L1 PBT</strong></td>
+      <td>Unit test phase in CI</td>
+      <td>~2s per property</td>
+      <td>Every commit</td>
+    </tr>
+    <tr>
+      <td><strong>L2 Mutation</strong></td>
+      <td>PR check (changed files only)</td>
+      <td>~5 min</td>
+      <td>PR open/update</td>
+    </tr>
+    <tr>
+      <td><strong>L3 Contracts</strong></td>
+      <td>PR check + nightly full verification</td>
+      <td>~10 min</td>
+      <td>PR + scheduled</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="tip" title="Layer ordering matters">
+  <p>
+    Run L0 and L1 first. They are deterministic and fast. If architecture rules or properties fail,
+    there is no point running mutation analysis or contract verification. Fail fast, save CI minutes.
+  </p>
+</Callout>
+
+<h2>Test Impact Analysis</h2>
+
+<p>
+  As your test suite grows, running everything on every PR becomes impractical. Test Impact Analysis (TIA)
+  identifies which tests are affected by a change and runs only those.
+</p>
+
+<ul>
+  <li>
+    <strong>Spotify model</strong> &mdash; With 50K+ tests, Spotify runs only tests affected by the
+    changed code paths. Their honeycomb testing model prioritizes integration tests with contract verification.
+  </li>
+  <li>
+    <strong>Predictive test selection</strong> &mdash; Tools like Launchable use ML to predict which tests
+    are most likely to fail for a given change, running the high-risk subset first for faster feedback.
+  </li>
+  <li>
+    <strong>Parallelization strategies</strong> &mdash; Split test suites by module, by layer, or by
+    estimated duration. Run L0+L1 in parallel with L2 on changed files. Run L3 contracts asynchronously.
+  </li>
+</ul>
+
+<h2>Flaky test management</h2>
+
+<p>
+  Flaky tests are the #1 reason developers stop trusting CI. The goal is not zero flakiness (impossible
+  at scale) but a managed budget.
+</p>
+
+<h3>Detection</h3>
+<p>
+  Track per-test pass rates over a rolling window (e.g., last 100 runs). Any test with a pass rate
+  below 98% gets flagged. Use the Test Observability and Reliability Score (TORS) metric to measure
+  suite-level health.
+</p>
+
+<h3>Quarantine</h3>
+<p>
+  Move flaky tests to a quarantine suite that runs but does not block the pipeline. Flaky tests still
+  execute (so you see when they stabilize) but do not erode developer trust.
+</p>
+
+<h3>Ownership assignment</h3>
+<p>
+  Every quarantined test gets an owner and a fix-by date. Unowned flaky tests accumulate indefinitely.
+  Owned flaky tests get fixed or deleted.
+</p>
+
+<Callout type="info" title="Flakiness budget">
+  <p>
+    Target: <strong>&lt;2% per-run flakiness</strong>. Google manages to this budget across millions
+    of tests. It is achievable with discipline.
+  </p>
+</Callout>
+
+<h2>Quality gates</h2>
+
+<p>
+  Quality gates are merge requirements that go beyond "tests pass." They measure whether your tests
+  actually verify behavior.
+</p>
+
+<ul>
+  <li><strong>Mutation score threshold</strong> &mdash; Require a minimum mutation score (e.g., 60%) for changed files. Survives-only reports highlight where tests are weakest.</li>
+  <li><strong>Contract verification</strong> &mdash; All consumer-driven contracts must pass before merge. No breaking API changes without consumer coordination.</li>
+  <li><strong>Architecture compliance</strong> &mdash; Zero ArchUnit violations on any PR. This is a hard gate, not a warning.</li>
+  <li><strong>Flakiness budget</strong> &mdash; PR cannot introduce new flaky tests. If a newly added test flakes in CI, the PR is blocked.</li>
+</ul>
+
+<h2>Metrics dashboard</h2>
+
+<p>
+  A quality dashboard surfaces the metrics that matter. Here is what to track and display:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>What it tells you</th>
+      <th>Target</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Mutation score trend</strong></td>
+      <td>Whether tests are getting better at catching real bugs</td>
+      <td>Rising toward 70%+</td>
+    </tr>
+    <tr>
+      <td><strong>TORS</strong></td>
+      <td>Overall test suite reliability</td>
+      <td>&gt;98%</td>
+    </tr>
+    <tr>
+      <td><strong>Defect escape rate</strong></td>
+      <td>Bugs reaching production that tests should have caught</td>
+      <td>Declining quarter over quarter</td>
+    </tr>
+    <tr>
+      <td><strong>Test execution time</strong></td>
+      <td>CI feedback speed</td>
+      <td>&lt;10 min for PR suite</td>
+    </tr>
+    <tr>
+      <td><strong>Flake rate</strong></td>
+      <td>Percentage of test runs with at least one flaky failure</td>
+      <td>&lt;2%</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Tool selection</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Java / Kotlin</th>
+      <th>JavaScript / TypeScript</th>
+      <th>Python</th>
+      <th>.NET</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>L0 Architecture</strong></td>
+      <td>ArchUnit</td>
+      <td>dependency-cruiser</td>
+      <td>import-linter</td>
+      <td>NetArchTest</td>
+    </tr>
+    <tr>
+      <td><strong>L1 PBT</strong></td>
+      <td>jqwik</td>
+      <td>fast-check</td>
+      <td>Hypothesis</td>
+      <td>FsCheck</td>
+    </tr>
+    <tr>
+      <td><strong>L2 Mutation</strong></td>
+      <td>PIT (pitest)</td>
+      <td>Stryker</td>
+      <td>mutmut</td>
+      <td>Stryker.NET</td>
+    </tr>
+    <tr>
+      <td><strong>L3 Contracts</strong></td>
+      <td>Pact JVM</td>
+      <td>Pact JS</td>
+      <td>Pact Python</td>
+      <td>Pact .NET</td>
+    </tr>
+  </tbody>
+</table>
+
+</DocLayout>
