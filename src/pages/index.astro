@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LayerDiagram from '../components/LayerDiagram.astro';
 import StatCard from '../components/StatCard.astro';
 import PersonaCard from '../components/PersonaCard.astro';
 import ResourceCard from '../components/ResourceCard.astro';
-import Callout from '../components/Callout.astro';
 import FaqAccordion from '../components/FaqAccordion.astro';
 import '../styles/landing.css';
 
@@ -26,469 +26,337 @@ const faqTeaseItems = [
 ---
 <BaseLayout title="Visdom Testing">
 
-  <!-- ============ Hero Section ============ -->
-  <section class="hero">
-    <div class="hero__inner">
-      <h1 class="hero__headline">
-        Visdom<br />
-        <span class="hero__gradient">Testing</span>
-      </h1>
-      <p class="hero__subtitle">
-        A multi-layered testing strategy for teams shipping AI-generated code.
-        Part of the Visdom AI-Native SDLC.
-      </p>
-      <div class="hero__buttons">
-        <a href={`${base}guide/leaders/`} class="btn btn--primary">For Leaders</a>
-        <a href={`${base}reference/`} class="btn btn--outline">Technical Reference</a>
+  <!-- ============ Hero: Split layout ============ -->
+  <section class="hero hero--split">
+    <div class="hero__inner hero__inner--split">
+      <div class="hero__text">
+        <p class="hero__eyebrow">Part of <a href="https://virtuslab.com/services/visdom" class="hero__tagline-link">Visdom</a> &middot; AI-Native SDLC</p>
+        <h1 class="hero__headline hero__headline--left">
+          Multi-layered testing for
+          <span class="hero__gradient">AI-generated code</span>
+        </h1>
+        <p class="hero__subtitle hero__subtitle--left">
+          When AI writes the code and the tests, who tests the tests?
+          Visdom Testing adds architecture guardrails, property-based verification,
+          mutation analysis, and contract testing to your CI pipeline.
+        </p>
+        <div class="hero__buttons hero__buttons--left">
+          <a href={`${base}guide/leaders/`} class="btn btn--primary">For Leaders</a>
+          <a href={`${base}reference/`} class="btn btn--outline">Technical Reference</a>
+          <a href={`${base}before-after/`} class="btn btn--outline">Before / After</a>
+        </div>
       </div>
-      <p class="hero__tagline">Part of <a href="https://virtuslab.com/services/visdom" class="hero__tagline-link">Visdom</a> &middot; VirtusLab's AI-Native SDLC</p>
+      <div class="hero__visual">
+        <LayerDiagram />
+      </div>
+    </div>
+  </section>
 
-      <!-- Pipeline strip -->
-      <div class="pipeline">
-        <div class="pipeline__stage">
-          <span class="pipeline__label">L0</span>
-          <span class="pipeline__name">Architecture</span>
+  <!-- ============ The Problem: Dark full-width banner ============ -->
+  <section class="problem-banner">
+    <div class="problem-banner__inner">
+      <h2 class="problem-banner__heading">The circular quality problem</h2>
+      <p class="problem-banner__subtitle">AI generates both implementation and tests. Traditional metrics break down.</p>
+      <div class="problem-banner__grid">
+        <div class="problem-banner__card">
+          <span class="problem-banner__num">01</span>
+          <strong class="problem-banner__title">Circular Tests</strong>
+          <p class="problem-banner__desc">Tests pass because they encode the same assumptions as the code.</p>
         </div>
-        <span class="pipeline__arrow">&rarr;</span>
-        <div class="pipeline__stage">
-          <span class="pipeline__label">L1</span>
-          <span class="pipeline__name">Property-Based</span>
+        <div class="problem-banner__card">
+          <span class="problem-banner__num">02</span>
+          <strong class="problem-banner__title">Metric Inflation</strong>
+          <p class="problem-banner__desc">90% line coverage, 0 computation bugs caught.</p>
         </div>
-        <span class="pipeline__arrow">&rarr;</span>
-        <div class="pipeline__stage">
-          <span class="pipeline__label">L2</span>
-          <span class="pipeline__name">Mutation</span>
+        <div class="problem-banner__card">
+          <span class="problem-banner__num">03</span>
+          <strong class="problem-banner__title">Architecture Erosion</strong>
+          <p class="problem-banner__desc">AI takes the shortest path. Controllers call repositories directly.</p>
         </div>
-        <span class="pipeline__arrow">&rarr;</span>
-        <div class="pipeline__stage">
-          <span class="pipeline__label">L3</span>
-          <span class="pipeline__name">Contract</span>
-        </div>
-        <span class="pipeline__arrow">&rarr;</span>
-        <div class="pipeline__stage pipeline__stage--dashboard">
-          <span class="pipeline__label">D</span>
-          <span class="pipeline__name">Dashboard</span>
+        <div class="problem-banner__card">
+          <span class="problem-banner__num">04</span>
+          <strong class="problem-banner__title">API Regression</strong>
+          <p class="problem-banner__desc">AI reaches for deprecated APIs from training data.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ Feature Row 1: The layers ============ -->
-  <section class="feature-row feature-row--white">
-    <div class="feature-row__inner">
-      <div class="feature-row__text">
-        <span class="kicker">How it works</span>
-        <h2 class="feature-row__heading">Layered testing</h2>
-        <p class="feature-row__desc">
-          Each layer catches a different class of defect. Architecture tests guard structure.
-          Property-based tests catch computation bugs. Mutation testing measures real test effectiveness.
-          Contracts verify cross-service correctness.
+  <!-- ============ Evidence + Stats: Combined section ============ -->
+  <section class="evidence-section">
+    <div class="evidence-section__inner">
+      <div class="evidence-section__top">
+        <h2 class="section-heading">The evidence</h2>
+        <p class="section-subtitle">
+          Same agent, same CRUD task, 10 repetitions. The numbers speak for themselves.
         </p>
-        <a href={`${base}reference/`} class="feature-row__link">Full architecture reference &rarr;</a>
       </div>
-      <div class="feature-row__visual">
-        <div class="card">
-          <div class="card__stages">
-            <div class="card__stage">
-              <span class="card__num">01</span>
-              <span class="card__badge card__badge--blue">L0 Architecture</span>
-              <p class="card__stage-desc">ArchUnit rules. Deterministic. &lt;10s.</p>
-            </div>
-            <div class="card__stage">
-              <span class="card__num">02</span>
-              <span class="card__badge card__badge--blue">L1 Property-Based</span>
-              <p class="card__stage-desc">jqwik properties. 1000+ inputs/property. ~2s.</p>
-            </div>
-            <div class="card__stage">
-              <span class="card__num">03</span>
-              <span class="card__badge card__badge--amber">L2 Mutation</span>
-              <p class="card__stage-desc">PIT + AI augmentation. Real effectiveness. ~5min.</p>
-            </div>
-            <div class="card__stage">
-              <span class="card__num">04</span>
-              <span class="card__badge card__badge--purple">L3 Contract</span>
-              <p class="card__stage-desc">Pact contracts. Cross-service verification. ~10min.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ============ Feature Row 2: Testing shapes ============ -->
-  <section class="feature-row feature-row--offwhite">
-    <div class="feature-row__inner feature-row__inner--flipped">
-      <div class="feature-row__text">
-        <span class="kicker">No single shape fits all</span>
-        <h2 class="feature-row__heading">Testing strategies</h2>
-        <p class="feature-row__desc">
-          The classic test pyramid is not wrong &mdash; it is incomplete. The right shape depends on your
-          architecture: microservices need the honeycomb, frontend-heavy apps need the trophy.
-          Visdom Testing adapts the strategy to your stack.
-        </p>
-        <a href={`${base}reference/architecture/`} class="feature-row__link">See the full strategy framework &rarr;</a>
-      </div>
-      <div class="feature-row__visual">
-        <div class="card">
-          <div class="strategy-grid">
-            <div class="strategy-card strategy-card--pyramid">
-              <span class="strategy-card__level">Pyramid</span>
-              <p class="strategy-card__desc">Classic. Many unit, fewer integration, minimal E2E. Best for monoliths.</p>
-            </div>
-            <div class="strategy-card strategy-card--trophy">
-              <span class="strategy-card__level">Trophy</span>
-              <p class="strategy-card__desc">Integration-heavy. Kent C. Dodds model. Best for modern frontend.</p>
-            </div>
-            <div class="strategy-card strategy-card--honeycomb">
-              <span class="strategy-card__level">Honeycomb</span>
-              <p class="strategy-card__desc">Spotify model. Contract-focused. Best for microservices.</p>
-            </div>
-            <div class="strategy-card strategy-card--diamond">
-              <span class="strategy-card__level">Diamond</span>
-              <p class="strategy-card__desc">Wide integration layer. Best for domain services.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ Feature Row 3: The AI testing problem ============ -->
-  <section class="feature-row feature-row--white">
-    <div class="feature-row__inner">
-      <div class="feature-row__text">
-        <span class="kicker">The circular quality problem</span>
-        <h2 class="feature-row__heading">AI writes code. AI writes tests. Who tests the tests?</h2>
-        <p class="feature-row__desc">
-          When AI generates both implementation and tests, traditional metrics break down. Coverage
-          reaches 90%+ but tests mirror implementation instead of verifying behavior.
-          Property-based testing and mutation testing break the circle.
-        </p>
-        <a href={`${base}before-after/`} class="feature-row__link">See real examples &rarr;</a>
-      </div>
-      <div class="feature-row__visual">
-        <div class="card">
-          <div class="problems-list">
-            <div class="problem">
-              <span class="problem__num">01</span>
-              <div>
-                <strong class="problem__title">Circular Tests</strong>
-                <p class="problem__desc">AI-generated tests that pass because they encode the same assumptions as the code.</p>
+      <div class="evidence-section__columns">
+        <!-- Left: Experiment table -->
+        <div class="evidence-section__primary">
+          <div class="card">
+            <p class="card__label">ArchUnit experiment &mdash; 10 runs each</p>
+            <div class="diff-table">
+              <div class="diff-table__header">
+                <span></span>
+                <span class="diff-table__col-head">Without ArchUnit</span>
+                <span class="diff-table__col-head diff-table__col-head--vt">With ArchUnit</span>
               </div>
-            </div>
-            <div class="problem">
-              <span class="problem__num">02</span>
-              <div>
-                <strong class="problem__title">Metric Inflation</strong>
-                <p class="problem__desc">90% line coverage, 0 computation bugs caught. Coverage lies without mutation testing.</p>
+              <div class="diff-table__row">
+                <span class="diff-table__label">Layer bypass</span>
+                <span>10/10 violations</span>
+                <span class="diff-table__vt">0/10 violations</span>
               </div>
-            </div>
-            <div class="problem">
-              <span class="problem__num">03</span>
-              <div>
-                <strong class="problem__title">Architecture Erosion</strong>
-                <p class="problem__desc">AI takes the shortest path to compilation. Controllers call repositories directly.</p>
+              <div class="diff-table__row">
+                <span class="diff-table__label">Field injection</span>
+                <span>1/10</span>
+                <span class="diff-table__vt">0/10</span>
               </div>
-            </div>
-            <div class="problem">
-              <span class="problem__num">04</span>
-              <div>
-                <strong class="problem__title">API Regression</strong>
-                <p class="problem__desc">AI reaches for deprecated APIs from training data, not the ones your team migrated to.</p>
+              <div class="diff-table__row">
+                <span class="diff-table__label">Generic exception</span>
+                <span>1/10</span>
+                <span class="diff-table__vt">0/10</span>
+              </div>
+              <div class="diff-table__row">
+                <span class="diff-table__label">Compilation required?</span>
+                <span>Yes (violations compile)</span>
+                <span class="diff-table__vt">Violations fail the build</span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ============ Feature Row 4: Experiment evidence ============ -->
-  <section class="feature-row feature-row--offwhite">
-    <div class="feature-row__inner feature-row__inner--flipped">
-      <div class="feature-row__text">
-        <span class="kicker">Controlled experiment</span>
-        <h2 class="feature-row__heading">The evidence</h2>
-        <p class="feature-row__desc">
-          Same agent, same CRUD task, 10 repetitions across three variants.
-          Without ArchUnit, the AI violated layer boundaries in 10/10 runs.
-          With ArchUnit in the test loop, 0/10 violations. Property-based testing
-          found 2 computation bugs that 90% coverage and 16 hand-written tests missed.
-        </p>
-        <a href={`${base}reference/layers/architecture-testing/`} class="feature-row__link">Read the ArchUnit experiment &rarr;</a>
-      </div>
-      <div class="feature-row__visual">
-        <div class="card">
-          <p class="card__label">ArchUnit experiment results</p>
-          <div class="diff-table">
-            <div class="diff-table__header">
-              <span></span>
-              <span class="diff-table__col-head">Without ArchUnit</span>
-              <span class="diff-table__col-head diff-table__col-head--vt">With ArchUnit</span>
-            </div>
-            <div class="diff-table__row">
-              <span class="diff-table__label">Layer bypass</span>
-              <span>10/10 violations</span>
-              <span class="diff-table__vt">0/10 violations</span>
-            </div>
-            <div class="diff-table__row">
-              <span class="diff-table__label">Field injection</span>
-              <span>1/10</span>
-              <span class="diff-table__vt">0/10</span>
-            </div>
-            <div class="diff-table__row">
-              <span class="diff-table__label">Generic exception</span>
-              <span>1/10</span>
-              <span class="diff-table__vt">0/10</span>
-            </div>
-            <div class="diff-table__row">
-              <span class="diff-table__label">Compilation required?</span>
-              <span>Yes (violations compile)</span>
-              <span class="diff-table__vt">Violations fail the build</span>
+          <div class="card" style="margin-top: 16px;">
+            <p class="card__label">PBT vs Traditional &mdash; metric comparison</p>
+            <div class="experiment-table-wrap">
+              <table class="experiment-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Traditional</th>
+                    <th>PBT</th>
+                    <th>Combined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Line coverage</strong></td>
+                    <td>90%</td>
+                    <td>80%</td>
+                    <td class="experiment-table__score">90%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Mutation score</strong></td>
+                    <td>73%</td>
+                    <td>55%</td>
+                    <td class="experiment-table__score">73%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Bugs found</strong></td>
+                    <td>0/2</td>
+                    <td>2/2</td>
+                    <td class="experiment-table__score">2/2</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ============ Stats Section ============ -->
-  <section class="stats-section">
-    <div class="stats-section__inner">
-      <h2 class="section-heading">The testing gap in numbers</h2>
-      <p class="section-subtitle">
-        Your CI says the code is fine. Your tests pass. But the AI wrote the tests too.
-      </p>
-      <div class="grid sm:grid-cols-3 gap-4">
-        <StatCard
-          value="90%"
-          label="line coverage while missing every computation bug"
-          source="VirtusLab PBT Case Study"
-          color="red"
-        />
-        <StatCard
-          value="84%"
-          label="of CI test failures are flaky, not real regressions"
-          source="Google"
-          color="amber"
-        />
-        <StatCard
-          value="73%"
-          label="acceptance rate for AI-generated mutation tests"
-          source="Meta ACH (2024)"
-          color="purple"
-        />
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ Part of Visdom ============ -->
-  <section class="visdom-section">
-    <div class="visdom-section__inner">
-      <h2 class="section-heading">Part of Visdom</h2>
-      <p class="section-subtitle">
-        Visdom Testing is one of four components in <a href="https://virtuslab.com/services/visdom">Visdom</a>, VirtusLab's AI-Native SDLC.
-      </p>
-      <div class="visdom-grid">
-        <a href="https://github.com/virtuslab/vidia" class="visdom-card">
-          <span class="visdom-card__kicker">Context Fabric</span>
-          <h4 class="visdom-card__title">ViDIA</h4>
-          <p class="visdom-card__desc">Pre-indexed code expertise, dependency graphs, PR history</p>
-        </a>
-        <div class="visdom-card">
-          <span class="visdom-card__kicker">Machine-Speed CI</span>
-          <h4 class="visdom-card__title">Fast Feedback</h4>
-          <p class="visdom-card__desc">Sub-2-min CI loops, caching, incremental builds, test impact analysis</p>
+        <!-- Right: Stats stacked vertically -->
+        <div class="evidence-section__sidebar">
+          <StatCard
+            value="90%"
+            label="line coverage while missing every computation bug"
+            source="VirtusLab PBT Case Study"
+            color="red"
+          />
+          <StatCard
+            value="84%"
+            label="of CI test failures are flaky, not real regressions"
+            source="Google"
+            color="amber"
+          />
+          <StatCard
+            value="73%"
+            label="acceptance rate for AI-generated mutation tests"
+            source="Meta ACH (2024)"
+            color="purple"
+          />
         </div>
-        <a href="https://virtuslab.github.io/visdom-code-review/" class="visdom-card">
-          <span class="visdom-card__kicker">Risk Assessment</span>
-          <h4 class="visdom-card__title">VCR</h4>
-          <p class="visdom-card__desc">Multi-layered AI code review with risk-based gating</p>
-        </a>
-        <a href={`${base}`} class="visdom-card visdom-card--active">
-          <span class="visdom-card__kicker visdom-card__kicker--active">Quality Assurance</span>
-          <h4 class="visdom-card__title">Testing</h4>
-          <p class="visdom-card__desc">Multi-layered testing strategy for AI-generated code. You are here.</p>
-        </a>
       </div>
-      <p class="section-footnote">
-        Read the thinking behind it: <a href="https://virtuslab.com/blog/ai/the-fallacy">The AI-Native SDLC series</a>
-      </p>
+
+      <div class="evidence-section__insight">
+        <strong>The critical insight:</strong> By every standard metric, the traditional suite looked better.
+        PBT found both computation bugs &mdash; early rounding of discount rate and wrong rounding mode on VAT &mdash;
+        that 90% line coverage and 16 hand-written tests missed entirely.
+      </div>
     </div>
   </section>
 
-  <!-- ============ Persona Section ============ -->
+  <!-- ============ Personas: Horizontal cards ============ -->
   <section class="persona-section">
     <div class="persona-section__inner">
-      <h2 class="section-heading">What your team is saying right now</h2>
+      <h2 class="section-heading">Sound familiar?</h2>
       <p class="section-subtitle">
-        These are real patterns we see across enterprise teams adopting AI-assisted development.
+        Real patterns from enterprise teams adopting AI-assisted development.
       </p>
 
-      <PersonaCard name="Your Engineering Manager" role="Katja's problem" color="blue">
-        <p>"Our test suite takes 45 minutes and 84% of the failures are flaky. The developers don't trust CI anymore. They merge anyway and fix things in production."</p>
-      </PersonaCard>
+      <div class="persona-grid">
+        <PersonaCard name="Your Engineering Manager" role="Katja's problem" color="blue">
+          <p>"Our test suite takes 45 minutes and 84% of the failures are flaky. Developers don't trust CI anymore."</p>
+        </PersonaCard>
 
-      <PersonaCard name="Your QA Lead" role="Tomek's problem" color="purple">
-        <p>"We hit 90% coverage last quarter and celebrated. Then three pricing bugs shipped to production. The tests were there, they just tested the wrong things &mdash; the AI copied the implementation logic into the assertions."</p>
-      </PersonaCard>
+        <PersonaCard name="Your QA Lead" role="Tomek's problem" color="purple">
+          <p>"We hit 90% coverage then three pricing bugs shipped. The AI copied the implementation logic into the assertions."</p>
+        </PersonaCard>
 
-      <PersonaCard name="Your Senior Developer" role="Priya's problem" color="blue">
-        <p>"I asked Copilot to generate a service and it compiled on the first try. But it bypassed the service layer, used RestTemplate instead of RestClient, and the tests mocked everything so the integration was never actually tested."</p>
-      </PersonaCard>
-
-      <div class="text-center mt-8">
-        <a href={`${base}before-after/`} class="feature-row__link">See concrete before/after scenarios &rarr;</a>
+        <PersonaCard name="Your Senior Developer" role="Priya's problem" color="amber">
+          <p>"Copilot bypassed the service layer, used RestTemplate instead of RestClient, and the tests mocked everything."</p>
+        </PersonaCard>
       </div>
     </div>
   </section>
 
-  <!-- ============ Go Deeper ============ -->
-  <section class="deeper-section">
-    <div class="deeper-section__inner">
-      <h2 class="section-heading">Go deeper</h2>
+  <!-- ============ Testing Strategies: Full-width 4-col grid ============ -->
+  <section class="strategies-section">
+    <div class="strategies-section__inner">
+      <h2 class="section-heading">No single shape fits all</h2>
       <p class="section-subtitle">
-        Reference material, architecture docs, and real-world evidence.
+        The right testing strategy depends on your architecture.
+        Visdom Testing adapts to your stack.
       </p>
-
-      <div class="grid sm:grid-cols-3 gap-3 mb-10">
-        <ResourceCard
-          title="Before / After Scenarios"
-          description="4 scenarios showing what changes when Visdom Testing is deployed."
-          href={`${base}before-after/`}
-          tag="SCENARIOS"
-          tagColor="blue"
-        />
-        <ResourceCard
-          title="Technical Reference"
-          description="Full architecture, layer docs, configuration, metrics framework."
-          href={`${base}reference/`}
-          tag="REFERENCE"
-          tagColor="purple"
-        />
-        <ResourceCard
-          title="Architecture Testing"
-          description="ArchUnit experiment: 10/10 violations without, 0/10 with."
-          href={`${base}reference/layers/architecture-testing/`}
-          tag="LAYER 0"
-          tagColor="blue"
-        />
-      </div>
-
-      <h3 class="section-subheading">From the field</h3>
-      <p class="section-subtitle section-subtitle--sm">
-        External research and real-world evidence that shaped this process.
-      </p>
-
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <ResourceCard
-          title="Meta: LLM-Powered Bug Catchers"
-          description="Automated Compliance Hardening: LLM mutation + test generation with 73% acceptance rate."
-          href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/"
-          tag="RESEARCH"
-          tagColor="red"
-          source="Meta Engineering"
-        />
-        <ResourceCard
-          title="Atlassian: AI Mutation Coverage"
-          description="Rovo Dev CLI closes mutation coverage gaps. 56% to 80% on real Jira projects."
-          href="https://www.atlassian.com/blog/developer/automating-mutation-coverage-with-ai"
-          tag="INDUSTRY"
-          tagColor="amber"
-          source="Atlassian"
-        />
-        <ResourceCard
-          title="Google: Flaky Tests at Scale"
-          description="84% of pass-to-fail transitions are flaky. Managing to a 2% budget, not eliminating."
-          href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html"
-          tag="RESEARCH"
-          tagColor="purple"
-          source="Google Testing Blog"
-        />
-        <ResourceCard
-          title="Spotify: Testing Honeycomb"
-          description="Microservices need integration-heavy testing. The honeycomb model for contract verification."
-          href="https://engineering.atspotify.com/2018/01/testing-of-microservices"
-          tag="INDUSTRY"
-          tagColor="blue"
-          source="Spotify Engineering"
-        />
+      <div class="strategies-grid">
+        <a href={`${base}reference/architecture/`} class="strategies-grid__card strategies-grid__card--pyramid">
+          <span class="strategies-grid__icon">&#9650;</span>
+          <h3 class="strategies-grid__title">Pyramid</h3>
+          <p class="strategies-grid__desc">Classic. Many unit, fewer integration, minimal E2E. Best for monoliths.</p>
+        </a>
+        <a href={`${base}reference/architecture/`} class="strategies-grid__card strategies-grid__card--trophy">
+          <span class="strategies-grid__icon">&#9733;</span>
+          <h3 class="strategies-grid__title">Trophy</h3>
+          <p class="strategies-grid__desc">Integration-heavy. Kent C. Dodds model. Best for modern frontend.</p>
+        </a>
+        <a href={`${base}reference/architecture/`} class="strategies-grid__card strategies-grid__card--honeycomb">
+          <span class="strategies-grid__icon">&#11042;</span>
+          <h3 class="strategies-grid__title">Honeycomb</h3>
+          <p class="strategies-grid__desc">Spotify model. Contract-focused. Best for microservices.</p>
+        </a>
+        <a href={`${base}reference/architecture/`} class="strategies-grid__card strategies-grid__card--diamond">
+          <span class="strategies-grid__icon">&#9670;</span>
+          <h3 class="strategies-grid__title">Diamond</h3>
+          <p class="strategies-grid__desc">Wide integration layer. Best for domain services.</p>
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- ============ FAQ Tease ============ -->
-  <section class="stats-section">
-    <div class="stats-section__inner">
-      <h2 class="section-heading">Common questions</h2>
+  <!-- ============ Resources + FAQ: Two-column layout ============ -->
+  <section class="resources-faq-section">
+    <div class="resources-faq-section__inner">
+      <div class="resources-faq-section__left">
+        <h2 class="section-heading" style="text-align: left;">Go deeper</h2>
 
-      <div style="max-width: 800px; margin: 0 auto;">
+        <div class="resources-stack">
+          <ResourceCard
+            title="Before / After Scenarios"
+            description="4 scenarios showing what changes when Visdom Testing is deployed."
+            href={`${base}before-after/`}
+            tag="SCENARIOS"
+            tagColor="blue"
+          />
+          <ResourceCard
+            title="Technical Reference"
+            description="Full architecture, layer docs, configuration, metrics framework."
+            href={`${base}reference/`}
+            tag="REFERENCE"
+            tagColor="purple"
+          />
+          <ResourceCard
+            title="Architecture Testing"
+            description="ArchUnit experiment: 10/10 violations without, 0/10 with."
+            href={`${base}reference/layers/architecture-testing/`}
+            tag="LAYER 0"
+            tagColor="blue"
+          />
+        </div>
+
+        <h3 class="section-subheading" style="text-align: left; margin-top: 2rem;">From the field</h3>
+        <div class="resources-stack resources-stack--2col">
+          <ResourceCard
+            title="Meta: LLM-Powered Bug Catchers"
+            description="73% acceptance rate for AI-generated mutation tests."
+            href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/"
+            tag="RESEARCH"
+            tagColor="red"
+            source="Meta Engineering"
+          />
+          <ResourceCard
+            title="Atlassian: AI Mutation Coverage"
+            description="56% to 80% mutation coverage on real Jira projects."
+            href="https://www.atlassian.com/blog/developer/automating-mutation-coverage-with-ai"
+            tag="INDUSTRY"
+            tagColor="amber"
+            source="Atlassian"
+          />
+          <ResourceCard
+            title="Google: Flaky Tests at Scale"
+            description="84% of pass-to-fail transitions are flaky."
+            href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html"
+            tag="RESEARCH"
+            tagColor="purple"
+            source="Google Testing Blog"
+          />
+          <ResourceCard
+            title="Spotify: Testing Honeycomb"
+            description="The honeycomb model for microservice contract verification."
+            href="https://engineering.atspotify.com/2018/01/testing-of-microservices"
+            tag="INDUSTRY"
+            tagColor="blue"
+            source="Spotify Engineering"
+          />
+        </div>
+      </div>
+
+      <div class="resources-faq-section__right">
+        <h2 class="section-heading" style="text-align: left;">FAQ</h2>
         <FaqAccordion items={faqTeaseItems} />
-      </div>
-
-      <div style="text-align: center; margin-top: 1.5rem;">
-        <a href={`${base}faq/`} class="btn btn--outline">See all questions &rarr;</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ Metrics that matter ============ -->
-  <section class="stats-section">
-    <div class="stats-section__inner">
-      <h2 class="section-heading">Metrics that actually matter</h2>
-      <p class="section-subtitle">
-        Line coverage is table stakes. These metrics tell you whether your tests would catch a bug.
-      </p>
-
-      <div class="experiment-table-wrap">
-        <table class="experiment-table">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>Traditional (10 tests)</th>
-              <th>PBT (8 properties)</th>
-              <th>Combined</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Line coverage</strong></td>
-              <td>90%</td>
-              <td>80%</td>
-              <td class="experiment-table__score">90%</td>
-            </tr>
-            <tr>
-              <td><strong>Branch coverage</strong></td>
-              <td>70%</td>
-              <td>50%</td>
-              <td class="experiment-table__score">70%</td>
-            </tr>
-            <tr>
-              <td><strong>Mutation score (PIT)</strong></td>
-              <td>73%</td>
-              <td>55%</td>
-              <td class="experiment-table__score">73%</td>
-            </tr>
-            <tr>
-              <td><strong>Computation bugs found</strong></td>
-              <td>0/2</td>
-              <td>2/2</td>
-              <td class="experiment-table__score">2/2</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="max-width: 800px; margin: 1rem auto 0; padding: 16px 20px; background: var(--off-white); border: 1px solid var(--light-gray); border-radius: 12px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
-        <strong style="color: var(--text);">The critical insight:</strong> By every standard metric, the traditional suite looked better.
-        If you relied on metrics alone, you would conclude PBT added no value. Meanwhile,
-        both computation bugs &mdash; early rounding of discount rate and wrong rounding mode on VAT &mdash;
-        would ship to production. <strong style="color: var(--text);">90% line coverage while missing every computation error that matters.</strong>
+        <div style="margin-top: 1rem;">
+          <a href={`${base}faq/`} class="btn btn--outline">See all questions &rarr;</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ CTA Section ============ -->
+  <!-- ============ Part of Visdom: Horizontal strip ============ -->
+  <section class="visdom-strip">
+    <div class="visdom-strip__inner">
+      <div class="visdom-strip__label">
+        <span class="kicker" style="margin-bottom: 0;">Part of Visdom</span>
+        <p class="visdom-strip__desc">VirtusLab's AI-Native SDLC</p>
+      </div>
+      <div class="visdom-strip__items">
+        <a href="https://github.com/virtuslab/vidia" class="visdom-strip__item">
+          <span class="visdom-strip__item-name">ViDIA</span>
+          <span class="visdom-strip__item-role">Context Fabric</span>
+        </a>
+        <div class="visdom-strip__item">
+          <span class="visdom-strip__item-name">Fast Feedback</span>
+          <span class="visdom-strip__item-role">Machine-Speed CI</span>
+        </div>
+        <a href="https://virtuslab.github.io/visdom-code-review/" class="visdom-strip__item">
+          <span class="visdom-strip__item-name">VCR</span>
+          <span class="visdom-strip__item-role">Code Review</span>
+        </a>
+        <a href={`${base}`} class="visdom-strip__item visdom-strip__item--active">
+          <span class="visdom-strip__item-name">Testing</span>
+          <span class="visdom-strip__item-role">Quality Assurance</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
   <section class="cta-section">
     <div class="cta-section__inner">
       <h2 class="cta-section__heading">
