@@ -446,11 +446,26 @@ Threshold:
 
 <h3>Industry Data</h3>
 
-<Callout type="reference" title="Google: Flaky Tests at Scale">
+<Callout type="reference" title="Google: Flaky Tests at Scale (Micco, ICST 2017)">
   <p>
-    Google's testing infrastructure data shows that <strong>84% of pass-to-fail test transitions</strong> are
-    caused by flakiness, not real regressions. Google manages flakiness to a <strong>2% budget</strong>: at
-    any given time, no more than 2% of tests may be flaky. Tests exceeding the budget are quarantined automatically.
+    Google's testing infrastructure data (4.2M tests, 150M executions/day) shows that
+    <strong>84% of pass-to-fail test transitions</strong> are caused by flakiness, not real regressions.
+    Google manages flakiness to a <strong>2% budget</strong>: at any given time, no more than 2% of tests
+    may be flaky. Tests exceeding the budget are quarantined automatically.
+    <em>(Source: John Micco, "The State of Continuous Integration Testing @Google," ICST 2017)</em>
+  </p>
+</Callout>
+
+<Callout type="reference" title="AI Code Quality: External Data">
+  <p>
+    <strong>DORA 2025</strong>: 90% AI adoption correlates with 9% bug rate increase and 91% more code review time.
+    <em>(<a href="https://dora.dev/research/2025/dora-report/">Google DORA Report</a>)</em><br />
+    <strong>CodeRabbit 2025</strong>: AI PRs average 10.83 issues vs 6.45 for human PRs (1.7x) across 470 pull requests.
+    <em>(<a href="https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report">CodeRabbit Report</a>)</em><br />
+    <strong>OOPSLA 2025</strong>: Each property-based test finds ~50x as many mutations as the average unit test.
+    <em>(<a href="https://cseweb.ucsd.edu/~mcoblenz/assets/pdf/OOPSLA_2025_PBT.pdf">UC San Diego</a>)</em><br />
+    <strong>Meta ACH 2025</strong>: 49% of AI-generated mutation tests caught faults invisible to line coverage.
+    <em>(<a href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/">Meta Engineering</a>)</em>
   </p>
 </Callout>
 

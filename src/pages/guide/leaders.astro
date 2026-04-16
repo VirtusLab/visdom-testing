@@ -24,15 +24,16 @@ const base = import.meta.env.BASE_URL;
 
 <h3>Flaky tests destroy trust</h3>
 <p>
-  84% of CI test failures are flaky, not real regressions (Google). Developers learn to ignore
+  84% of pass-to-fail test transitions are flaky, not real regressions (Micco, ICST 2017). Developers learn to ignore
   the signal. They merge without waiting for CI. The test suite becomes background noise &mdash;
   expensive background noise.
 </p>
 
 <Callout type="warning" title="The cost of flaky tests">
   <p>
-    8% of developer time spent on flaky tests &times; $150K average engineer cost &times; 50 engineers
-    = <strong>$600K/year wasted</strong> on tests that don't tell you anything real.
+    Plug in your own numbers: <strong>[% of dev time on flaky tests] &times; [avg engineer cost] &times; [team size]</strong>.
+    For a 50-person team where 8% of time goes to flaky tests at $150K/engineer, that's $600K/year
+    on tests that don't tell you anything real.
   </p>
 </Callout>
 
@@ -93,7 +94,7 @@ const base = import.meta.env.BASE_URL;
     <tr>
       <td>Testing hours per sprint</td>
       <td>Manual review + flaky triage (high)</td>
-      <td>Automated multi-layer (reduced 40-60%)</td>
+      <td>Automated multi-layer (significant reduction)</td>
     </tr>
     <tr>
       <td>Bugs escaping to production</td>
@@ -102,7 +103,7 @@ const base = import.meta.env.BASE_URL;
     </tr>
     <tr>
       <td>CI reliability</td>
-      <td>84% flaky failure rate</td>
+      <td>84% flaky transitions (Micco, ICST 2017)</td>
       <td>&lt;2% flakiness budget with quarantine</td>
     </tr>
     <tr>

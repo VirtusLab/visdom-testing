@@ -52,11 +52,30 @@ const economicsItems = [
 const methodologyItems = [
   {
     question: "PBT failures seem random and flaky — how do I trust them?",
-    answer: "PBT failures are NOT flaky. When a property-based test fails, it has found a real counterexample — a specific input that violates your declared property. The framework then shrinks it to the minimal failing case. If you run it again with the same seed, it reproduces exactly. This is fundamentally different from flaky tests: a flaky test fails intermittently due to timing or state; a PBT failure is a concrete proof that your code is wrong for that input.",
+    answer: "PBT failures are NOT flaky. When a property-based test fails, it has found a real counterexample — a specific input that violates your declared property. The framework then shrinks it to the minimal failing case. If you run it again with the same seed, it reproduces exactly. If a property fails on one seed and passes on another, that means the bug only manifests on specific inputs — which is exactly the kind of bug PBT is designed to find.",
   },
   {
     question: "How do I start with a legacy codebase?",
     answer: "Start with two things: (1) FreezingArchRule for architecture baseline — this captures your current violations and prevents new ones. As you fix existing violations, the frozen baseline shrinks. (2) Focus PBT on critical calculations — pricing, billing, permissions, financial formulas. These are where computation bugs cause the most damage and where PBT finds the most bugs. Don't try to add properties to everything at once.",
+  },
+];
+
+const challengeItems = [
+  {
+    question: "Your sample size is only 10 — isn't that too small?",
+    answer: "The 10/10 vs 0/10 split is extreme enough that Fisher's exact test gives p < 0.000002. That said, we're transparent about limitations: one CRUD task, one model (Claude Haiku 4.5). External data supports the pattern: Endor Labs found 15/20 AI completions had architectural design flaws, and 12/20 exhibited design pattern drift. We plan to expand across more models and task types.",
+  },
+  {
+    question: "This only works for Java — what about my stack?",
+    answer: "The methodology is language-agnostic; the tools vary. Java/Kotlin: ArchUnit + jqwik + PIT + Pact JVM. JavaScript/TypeScript: dependency-cruiser + fast-check + Stryker + Pact JS. Python: import-linter + Hypothesis + mutmut + Pact Python. .NET: NetArchTest + FsCheck + Stryker.NET + Pact .NET. The same layered approach applies in every ecosystem.",
+  },
+  {
+    question: "Isn't this too much testing overhead?",
+    answer: "Layers are designed for fast feedback. L0 (ArchUnit) runs in <10s — faster than your linter. L1 (PBT) runs in ~2s per property. These run on every PR. L2 (mutation) and L3 (contracts) only run on critical paths or nightly. OOPSLA 2025 research shows each PBT finds ~50x as many mutations as the average unit test — that's less overhead per bug caught, not more.",
+  },
+  {
+    question: "Why not just use better prompts instead of more testing?",
+    answer: "Better prompts help but are insufficient. Endor Labs found that 12/20 AI completions exhibited 'design pattern drift' regardless of prompt quality. Stanford CCS 2023 showed developers with AI assistants wrote less secure code while believing it was more secure. The problem isn't the prompt — it's the absence of verification. Prompts are suggestions; architecture tests are gates.",
   },
 ];
 ---
@@ -78,5 +97,8 @@ const methodologyItems = [
 
 <h2>Methodology</h2>
 <FaqAccordion items={methodologyItems} />
+
+<h2>Challenges & Limitations</h2>
+<FaqAccordion items={challengeItems} />
 
 </DocLayout>

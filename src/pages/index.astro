@@ -160,20 +160,26 @@ const faqTeaseItems = [
         <div class="evidence-section__sidebar">
           <StatCard
             value="90%"
-            label="line coverage while missing every computation bug"
+            label="line coverage while missing both computation bugs in a pricing module"
             source="VirtusLab PBT Case Study"
             color="red"
           />
           <StatCard
             value="84%"
-            label="of CI test failures are flaky, not real regressions"
-            source="Google"
+            label="of pass-to-fail test transitions are flaky, not real regressions"
+            source="Micco, ICST 2017 (Google)"
             color="amber"
+          />
+          <StatCard
+            value="1.7x"
+            label="more issues in AI-generated PRs than human-written ones"
+            source="CodeRabbit (2025)"
+            color="blue"
           />
           <StatCard
             value="73%"
             label="acceptance rate for AI-generated mutation tests"
-            source="Meta ACH (2024)"
+            source="Meta ACH (2025)"
             color="purple"
           />
         </div>
@@ -277,36 +283,68 @@ const faqTeaseItems = [
         <h3 class="section-subheading" style="text-align: left; margin-top: 2rem;">From the field</h3>
         <div class="resources-stack resources-stack--2col">
           <ResourceCard
-            title="Meta: LLM-Powered Bug Catchers"
-            description="73% acceptance rate for AI-generated mutation tests."
-            href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/"
+            title="DORA 2025: AI Adoption Impact"
+            description="90% AI adoption correlates with 9% bug rate increase and 91% more code review time."
+            href="https://dora.dev/research/2025/dora-report/"
             tag="RESEARCH"
             tagColor="red"
+            source="Google DORA"
+          />
+          <ResourceCard
+            title="Meta: LLM-Powered Bug Catchers"
+            description="73% acceptance rate. 49% of tests caught faults invisible to line coverage."
+            href="https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/"
+            tag="RESEARCH"
+            tagColor="purple"
             source="Meta Engineering"
+          />
+          <ResourceCard
+            title="PBT Finds 50x More Mutations"
+            description="Each property-based test finds ~50x as many mutations as the average unit test."
+            href="https://cseweb.ucsd.edu/~mcoblenz/assets/pdf/OOPSLA_2025_PBT.pdf"
+            tag="RESEARCH"
+            tagColor="blue"
+            source="OOPSLA 2025"
+          />
+          <ResourceCard
+            title="AI Code: 1.7x More Issues"
+            description="AI PRs average 10.83 issues vs 6.45 for human PRs across 470 pull requests."
+            href="https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report"
+            tag="RESEARCH"
+            tagColor="amber"
+            source="CodeRabbit (2025)"
           />
           <ResourceCard
             title="Atlassian: AI Mutation Coverage"
             description="56% to 80% mutation coverage on real Jira projects."
             href="https://www.atlassian.com/blog/developer/automating-mutation-coverage-with-ai"
             tag="INDUSTRY"
-            tagColor="amber"
+            tagColor="blue"
             source="Atlassian"
           />
           <ResourceCard
+            title="Stanford: AI Makes Code Less Secure"
+            description="Developers with AI assistants wrote less secure code but believed it was more secure."
+            href="https://dl.acm.org/doi/10.1145/3576915.3623157"
+            tag="RESEARCH"
+            tagColor="red"
+            source="Stanford / CCS 2023"
+          />
+          <ResourceCard
             title="Google: Flaky Tests at Scale"
-            description="84% of pass-to-fail transitions are flaky."
+            description="84% of pass-to-fail transitions are flaky. 1.5% of all executions report flakiness."
             href="https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html"
             tag="RESEARCH"
             tagColor="purple"
-            source="Google Testing Blog"
+            source="Micco, ICST 2017"
           />
           <ResourceCard
-            title="Spotify: Testing Honeycomb"
-            description="The honeycomb model for microservice contract verification."
-            href="https://engineering.atspotify.com/2018/01/testing-of-microservices"
-            tag="INDUSTRY"
-            tagColor="blue"
-            source="Spotify Engineering"
+            title="Endor Labs: AI Design Flaws"
+            description="15/20 AI completions had design flaws. 12/20 exhibited design pattern drift."
+            href="https://www.endorlabs.com/learn/design-flaws-in-ai-generated-code"
+            tag="RESEARCH"
+            tagColor="amber"
+            source="Endor Labs (2025)"
           />
         </div>
       </div>

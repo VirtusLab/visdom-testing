@@ -87,11 +87,12 @@ void shouldFetchUserDetails(MockServer mockServer) {'{'}
     assertThat(user.isActive()).isTrue();
 {'}'}</code></pre>
 
-<Callout type="info" title="40% reduction in integration issues">
+<Callout type="info" title="Catching issues earlier">
   <p>
-    Teams adopting consumer-driven contracts consistently report a 30-50% reduction in integration
-    issues discovered in staging or production. The issues are caught earlier, in isolated unit-speed
-    tests, before services ever interact.
+    eBay's Notification Platform team adopted Pact contracts and reported that the time to detect
+    API compatibility issues dropped from days to minutes &mdash; issues caught in isolated tests
+    before services ever interact in staging.
+    <em>(Source: <a href="https://innovation.ebayinc.com/stories/api-evolution-with-confidence-a-case-study-of-contract-testing-adoption-at-ebay/">eBay Innovation Blog</a>)</em>
   </p>
 </Callout>
 
