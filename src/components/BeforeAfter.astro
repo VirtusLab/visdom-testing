@@ -23,9 +23,9 @@ const { title, impacts } = Astro.props;
         <slot name="before" />
       </div>
     </div>
-    <div class="border border-emerald-200 bg-emerald-50/50 rounded-lg p-4">
+    <div class="border border-blue-200 bg-blue-50/50 rounded-lg p-4">
       <div class="flex items-center gap-2 mb-3">
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">AFTER</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">AFTER</span>
       </div>
       <div class="text-sm text-visdom-gray-600 [&>p]:!mb-2 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:space-y-1 [&>ol]:text-sm [&>ol]:text-visdom-gray-600 [&_strong]:text-visdom-gray-800">
         <slot name="after" />
@@ -39,7 +39,7 @@ const { title, impacts } = Astro.props;
           <div class="flex items-center gap-2 justify-center">
             <span class="text-base line-through text-red-400">{impact.before}</span>
             <span class="text-visdom-gray-400">&rarr;</span>
-            <span class="text-xl font-bold text-emerald-600">{impact.after}</span>
+            <span class="text-xl font-bold text-blue-600">{impact.after}</span>
           </div>
           <span class="text-xs text-visdom-gray-500">{impact.label}</span>
         </div>

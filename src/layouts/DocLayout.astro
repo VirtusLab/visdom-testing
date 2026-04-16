@@ -8,7 +8,7 @@ interface Props {
   title: string;
   subtitle?: string;
   section?: string;
-  tags?: { label: string; variant?: 'green' | 'gray' | 'outline' }[];
+  tags?: { label: string; variant?: 'blue' | 'gray' | 'outline' }[];
   prev?: { label: string; href: string };
   next?: { label: string; href: string };
 }
@@ -69,12 +69,12 @@ const base = import.meta.env.BASE_URL;
   }
 
   .doc-content :global(a) {
-    color: var(--color-visdom-green-dark);
+    color: var(--color-visdom-blue-dark);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
   .doc-content :global(a:hover) {
-    color: var(--color-visdom-green-dark);
+    color: var(--color-visdom-blue-dark);
   }
 
   .doc-content :global(code) {
@@ -134,7 +134,7 @@ const base = import.meta.env.BASE_URL;
   }
 
   .doc-content :global(blockquote) {
-    border-left: 3px solid var(--color-visdom-green);
+    border-left: 3px solid var(--color-visdom-blue);
     padding-left: 1rem;
     margin: 1rem 0;
     color: var(--color-visdom-gray-500);

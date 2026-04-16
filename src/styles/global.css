@@ -3,9 +3,9 @@
 @source "../../node_modules/@virtuslab/visdom-ui/dist";
 
 @theme {
-  --color-visdom-green: #10b981;
-  --color-visdom-green-light: #ecfdf5;
-  --color-visdom-green-dark: #059669;
+  --color-visdom-blue: #3b82f6;
+  --color-visdom-blue-light: #eff6ff;
+  --color-visdom-blue-dark: #2563eb;
   --color-visdom-gray-50: #f9fafb;
   --color-visdom-gray-100: #f3f4f6;
   --color-visdom-gray-200: #e5e7eb;
@@ -34,7 +34,7 @@
 
   p { @apply text-base leading-relaxed text-visdom-gray-600 mb-5; }
 
-  a { @apply text-visdom-green hover:text-visdom-green-dark transition-colors; }
+  a { @apply text-visdom-blue hover:text-visdom-blue-dark transition-colors; }
 
   ul { @apply list-disc pl-6 mb-5 space-y-1.5; }
   ul li { @apply text-visdom-gray-600 leading-relaxed; }
