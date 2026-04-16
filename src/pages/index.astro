@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import LayerDiagram from '../components/LayerDiagram.astro';
 import StatCard from '../components/StatCard.astro';
 import PersonaCard from '../components/PersonaCard.astro';
 import ResourceCard from '../components/ResourceCard.astro';
@@ -26,29 +25,23 @@ const faqTeaseItems = [
 ---
 <BaseLayout title="Visdom Testing">
 
-  <!-- ============ Hero: Split layout ============ -->
-  <section class="hero hero--split">
-    <div class="hero__inner hero__inner--split">
-      <div class="hero__text">
-        <p class="hero__eyebrow">Part of <a href="https://virtuslab.com/services/visdom" class="hero__tagline-link">Visdom</a> &middot; AI-Native SDLC</p>
-        <h1 class="hero__headline hero__headline--left">
-          Multi-layered testing for
-          <span class="hero__gradient">AI-generated code</span>
-        </h1>
-        <p class="hero__subtitle hero__subtitle--left">
-          When AI writes the code and the tests, who tests the tests?
-          Visdom Testing adds architecture guardrails, property-based verification,
-          mutation analysis, and contract testing to your CI pipeline.
-        </p>
-        <div class="hero__buttons hero__buttons--left">
-          <a href={`${base}guide/leaders/`} class="btn btn--primary">For Leaders</a>
-          <a href={`${base}reference/`} class="btn btn--outline">Technical Reference</a>
-          <a href={`${base}before-after/`} class="btn btn--outline">Before / After</a>
-        </div>
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="hero__inner">
+      <h1 class="hero__headline">
+        Visdom<br />
+        <span class="hero__gradient">Testing</span>
+      </h1>
+      <p class="hero__subtitle">
+        A multi-layered testing strategy for teams shipping AI-generated code.
+        When AI writes the code and the tests, who tests the tests?
+      </p>
+      <div class="hero__buttons">
+        <a href={`${base}guide/leaders/`} class="btn btn--primary">For Leaders</a>
+        <a href={`${base}reference/`} class="btn btn--outline">Technical Reference</a>
+        <a href={`${base}before-after/`} class="btn btn--outline">Before / After</a>
       </div>
-      <div class="hero__visual">
-        <LayerDiagram />
-      </div>
+      <p class="hero__tagline">Part of <a href="https://virtuslab.com/services/visdom" class="hero__tagline-link">Visdom</a> &middot; VirtusLab's AI-Native SDLC</p>
     </div>
   </section>
 

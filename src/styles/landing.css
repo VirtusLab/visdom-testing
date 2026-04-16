@@ -33,37 +33,25 @@ body {
   box-sizing: border-box;
 }
 
-/* ===== Hero: Split layout ===== */
-.hero--split {
+/* ===== Hero ===== */
+.hero {
   background: var(--white);
-  background-image: radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.06) 0%, transparent 60%);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.06) 0%, transparent 60%);
   padding: 80px 24px 64px;
-  text-align: left;
+  text-align: center;
 }
-.hero__inner--split {
+.hero__inner {
   max-width: var(--max-w);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: center;
-}
-.hero__eyebrow {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 0 0 16px;
 }
 .hero__headline {
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+  font-size: clamp(2.8rem, 6.5vw, 4.5rem);
   letter-spacing: -0.04em;
-  line-height: 1.1;
+  line-height: 1.05;
   color: var(--text);
-  margin: 0 0 20px;
-}
-.hero__headline--left {
-  text-align: left;
+  margin: 0 0 24px;
 }
 .hero__gradient {
   background: var(--brand-gradient);
@@ -71,20 +59,18 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.hero__subtitle--left {
-  text-align: left;
+.hero__subtitle {
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--text-secondary);
-  max-width: 520px;
-  margin: 0 0 28px;
-  line-height: 1.65;
+  max-width: 640px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
 }
-.hero__buttons--left {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+.hero__tagline {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
 }
 .hero__tagline-link {
   color: var(--brand-blue);
@@ -93,9 +79,6 @@ body {
 }
 .hero__tagline-link:hover {
   text-decoration: underline;
-}
-.hero__visual {
-  padding: 16px 0;
 }
 
 /* Buttons */
@@ -598,23 +581,6 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
-  .hero__inner--split {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .hero--split {
-    text-align: center;
-  }
-  .hero__headline--left,
-  .hero__subtitle--left {
-    text-align: center;
-    max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .hero__buttons--left {
-    justify-content: center;
-  }
   .problem-banner__grid {
     grid-template-columns: 1fr 1fr;
   }
