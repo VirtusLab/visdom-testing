@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@virtuslab/visdom-ui/styles.css";
 
 @source "../../node_modules/@virtuslab/visdom-ui/dist";
 
